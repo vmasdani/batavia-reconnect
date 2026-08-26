@@ -107,6 +107,16 @@ interface GameState {
    */
   skit: Scene | null
   skitLine: number
+  /**
+   * The era whose opening scene has not been read yet, or null.
+   *
+   * Set when a playable era is loaded and cleared when the scene is read or
+   * skipped, so the chapter plays once at the start of a run and never again —
+   * including the run Era 0 hands to Era 1, which is a fresh Era 1 either way.
+   * Kept here rather than in `sim`/`survey` because it is about the screen
+   * having been shown, not about anything the day loop resolves.
+   */
+  opening: EraId | null
   enterEra: (era: EraId) => void
   /**
    * Take the prologue's end state into Era 1. Unlike `enterEra(1)`, which
@@ -129,6 +139,7 @@ interface GameState {
   openSkit: (scene: Scene) => void
   advanceSkit: () => void
   closeSkit: () => void
+  dismissOpening: () => void
 }
 
 /** Day one, with every circuit derived from the hardware that is actually up. */
@@ -154,6 +165,9 @@ export const useGame = create<GameState>((set, get) => ({
   report: null,
   skit: null,
   skitLine: 0,
+  // Era 1 is what the page opens on, and its chapter should play the first
+  // time it is looked at just as it does when it is chosen from the menu.
+  opening: 1,
   // Selecting one kind of thing clears the others, so only one panel is open.
   select: (id) => set({ selectedId: id, selectedScavengeId: null, selectedCampId: null }),
   selectScavenge: (id) => set({ selectedScavengeId: id, selectedId: null, selectedCampId: null }),
@@ -180,6 +194,7 @@ export const useGame = create<GameState>((set, get) => ({
       report: null,
       skit: null,
       skitLine: 0,
+      opening: era,
     })
   },
   carryIntoEra1: () => {
@@ -197,6 +212,7 @@ export const useGame = create<GameState>((set, get) => ({
       report: null,
       skit: null,
       skitLine: 0,
+      opening: 1,
     })
   },
   sendLetter: () => set({ survey: postLetter(get().world, get().survey) }),
@@ -228,6 +244,7 @@ export const useGame = create<GameState>((set, get) => ({
   /** Called by the map once the last token is parked. */
   finishPlayback: () => set({ playing: null, report: get().pending, pending: null }),
   dismissReport: () => set({ report: null }),
+  dismissOpening: () => set({ opening: null }),
   // The caller passes the scene rather than an id: Era 0's skits are
   // translated, so which text is being played is the caller's decision and not
   // something the store can look up.

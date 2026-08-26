@@ -69,7 +69,7 @@ export function Root() {
         }}
       />
     ) : mode === 'game' ? (
-      <App onExit={() => setMode('menu')} />
+      <App lang={lang} onExit={() => setMode('menu')} />
     ) : (
       <MainMenu lang={lang} onLang={pickLang} onPick={pick} />
     )

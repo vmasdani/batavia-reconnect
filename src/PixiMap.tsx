@@ -455,6 +455,16 @@ export function PixiMap() {
         for (const id of survey.fires) {
           const at = firePoints.get(id)
           if (!at) continue
+          // A fire stands on the real high ground above its village, which can
+          // be 4 kilometres out and lands well away from the settlement art —
+          // sometimes nearer a neighbour's. This thin stalk says whose it is.
+          const home = sites.get(id)?.ground
+          if (home) {
+            signalGraphics
+              .moveTo(home.x, home.y)
+              .lineTo(at.x, at.y)
+              .stroke({ width: 1.2 * strokeScale, color: 0xff9d4a, alpha: 0.3 })
+          }
           const r = 7 * strokeScale
           signalGraphics.circle(at.x, at.y, r * 2.1).fill({ color: 0xff9d4a, alpha: 0.13 })
           signalGraphics

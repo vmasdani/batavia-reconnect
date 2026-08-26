@@ -25,8 +25,14 @@ import { UI, chaptersIn, type Lang } from './lang'
 /** Where in a chapter the reader is. Halves are dialogue; the rest are cards. */
 type Beat = 'title' | 'opening' | 'work' | 'closing'
 
-/** Everyone who speaks in a run of lines, in first-line order, narrator aside. */
-function Card({
+/**
+ * A full-bleed title card: era, year, name, and one line of premise.
+ *
+ * Exported because a playable era opens with the same card before its own
+ * chapter plays — see `EraOpening.tsx`. There should be one of these, not two
+ * that drift apart.
+ */
+export function Card({
   era,
   eyebrow,
   title,

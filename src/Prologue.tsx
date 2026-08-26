@@ -17,6 +17,7 @@ import { useGame } from './store'
 import { DayIcon, RESOURCE_ICON } from './icons'
 import { Dialogue } from './Dialogue'
 import { SkitChip, SkitOverlay } from './Skit'
+import { EraOpening } from './EraOpening'
 import { availableSurveySkits } from './era0-skits'
 import { castOf } from './story'
 import { chaptersIn, type Lang } from './lang'
@@ -103,6 +104,30 @@ export function Prologue({ lang, onExit, onFinish }: { lang: Lang; onExit: () =>
   const toGoal = useMemo(() => messageDays(world, survey, GOAL), [world, survey])
   const lit = useMemo(() => fireLinks(world, survey), [world, survey])
   const roundTrip = useMemo(() => roundTripDays(world, survey), [world, survey])
+  /** The half of the win condition the top bar counts. See `resolveSurveyDay`. */
+  const held = survey.hold >= HOLD_DAYS
+
+  /**
+   * How long a message takes to each settlement, for the roster.
+   *
+   * One Dijkstra per settlement over a 13-node graph, so this is cheap, but it
+   * is recomputed on every order rather than every render.
+   */
+  const latency = useMemo(
+    () => new Map(world.settlements.map((s) => [s.id, messageDays(world, survey, s.id)])),
+    [world, survey],
+  )
+  /**
+   * Whether the high ground above each settlement can see anybody at all.
+   *
+   * Fixed by the terrain and never changes, which is exactly why it belongs in
+   * the list: it is the one fact that says whether laying a fire here is 3 days
+   * well spent, and most of the coastal plain sees nothing.
+   */
+  const seesAnyone = useMemo(
+    () => new Map(world.settlements.map((s) => [s.id, fireReach(world, s.id).length > 0])),
+    [world],
+  )
   const goalName = () => byId.get(GOAL)?.name ?? GOAL
   const ending = useMemo(() => chaptersIn(lang)[0].closing, [lang])
   const skits = useMemo(() => availableSurveySkits(survey, lang), [survey, lang])
@@ -157,8 +182,11 @@ export function Prologue({ lang, onExit, onFinish }: { lang: Lang; onExit: () =>
           </div>
           <div title={`${HOLD_TALKING} settlements talking, ${HOLD_DAYS} days running`}>
             <dt>Hold</dt>
-            <dd className={survey.hold > 0 ? 'is-good' : undefined}>
-              {survey.hold}/{HOLD_DAYS}
+            {/* Capped: the hold is a requirement, not a score, and a run that
+                sat at 27/7 for 20 days read as finished and stuck. */}
+            <dd className={held ? 'is-good' : undefined}>
+              {Math.min(survey.hold, HOLD_DAYS)}/{HOLD_DAYS}
+              {held && <em> held</em>}
             </dd>
           </div>
           <div title="Notice boards standing, fires laid, and pairs of fires that can answer each other">
@@ -207,12 +235,56 @@ export function Prologue({ lang, onExit, onFinish }: { lang: Lang; onExit: () =>
                       <img key={m.id} className="avatar" src={m.portrait} alt={m.name} width={17} height={17} />
                     ))}
                   </span>
-                  <span className="roster__state">{CONTACT_LABEL[contact]}</span>
+                  <span className="roster__signals">
+                    <span
+                      className={`roster__pip${hasBoard(survey, s.id) ? ' is-on' : ''}`}
+                      title={hasBoard(survey, s.id) ? 'Notice board on the gate' : 'No notice board'}
+                    >
+                      {hasBoard(survey, s.id) ? '■' : '□'}
+                    </span>
+                    <span
+                      className={[
+                        'roster__pip',
+                        hasFire(survey, s.id) ? 'is-on' : '',
+                        seesAnyone.get(s.id) ? '' : 'is-blind',
+                      ].join(' ')}
+                      title={
+                        hasFire(survey, s.id)
+                          ? 'Signal fire lit'
+                          : seesAnyone.get(s.id)
+                            ? 'No fire, but the hill here can see other settlements'
+                            : 'The high ground here sees nothing — a fire would be wasted'
+                      }
+                    >
+                      {hasFire(survey, s.id) ? '◆' : seesAnyone.get(s.id) ? '◇' : '×'}
+                    </span>
+                  </span>
+                  {/*
+                    The number the era is actually about, where the contact word
+                    used to be. A settlement can be talking and still have no
+                    route — everyone between here and there has to be talking
+                    too — and then the word is the more useful thing to say.
+                  */}
+                  <span className="roster__state">
+                    {s.id === 'batavia' ? (
+                      'here'
+                    ) : latency.get(s.id) != null ? (
+                      <em>{latency.get(s.id)}d</em>
+                    ) : (
+                      CONTACT_LABEL[contact]
+                    )}
+                  </span>
                 </button>
               </li>
             )
           })}
         </ul>
+        <p className="roster__legend">
+          <span>■ board</span>
+          <span>◆ fire lit</span>
+          <span>◇ hill sees others</span>
+          <span>× sees nothing</span>
+        </p>
       </aside>
 
       {selected && (
@@ -382,10 +454,18 @@ export function Prologue({ lang, onExit, onFinish }: { lang: Lang; onExit: () =>
                 >
                   Send word to {goalName()}
                 </button>
-                <span className="letter__note">
+                {/*
+                  Winning takes both halves — the hold and the round trip — and
+                  the hold is the one with a number in the top bar. Once it is
+                  done, say plainly that the letter is all that is left, or a
+                  finished region looks like a broken game.
+                */}
+                <span className={`letter__note${held && roundTrip !== null ? ' is-good' : ''}`}>
                   {roundTrip === null
                     ? `No road of talking villages reaches ${goalName()} yet.`
-                    : `${roundTrip} days there and back, as the region stands tonight.`}
+                    : held
+                      ? `The hold is done. This letter is the last thing Era 0 is waiting for — ${roundTrip} days there and back.`
+                      : `${roundTrip} days there and back, as the region stands tonight.`}
                 </span>
               </>
             )}
@@ -425,6 +505,7 @@ export function Prologue({ lang, onExit, onFinish }: { lang: Lang; onExit: () =>
 
       <ReportDialog />
       <SkitOverlay />
+      <EraOpening era={0} lang={lang} />
 
       {/*
         The era's ending is the story's own Era 0 closing, played over the map

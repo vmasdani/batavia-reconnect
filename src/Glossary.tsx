@@ -101,7 +101,10 @@ function TermBody({ term, lang }: { term: Term; lang: Lang }) {
 function TermPanel({ term, lang, onClose }: { term: Term; lang: Lang; onClose: () => void }) {
   const t = UI[lang]
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    // Above everything, including an era's opening overlay: a term is clickable
+    // wherever it appears, so its answer has to be able to open over whatever
+    // that was.
+    <div className="modal-backdrop modal-backdrop--over" onClick={onClose}>
       <div className="modal modal--term" onClick={(event) => event.stopPropagation()}>
         <p className="term-card__era">
           {t.era} {term.era}

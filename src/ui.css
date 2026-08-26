@@ -146,7 +146,7 @@ html, body, #root {
 .roster__item {
   width: 100%;
   display: grid;
-  grid-template-columns: 11px 1fr auto auto;
+  grid-template-columns: 11px 1fr auto auto auto;
   align-items: center;
   gap: 8px;
   padding: 8px 9px;
@@ -1014,6 +1014,7 @@ html, body, #root {
 /* Narration is italic; the term should stay part of the sentence. */
 .is-narration .term { font-style: italic; }
 
+.modal-backdrop--over { z-index: 400; }
 .modal--term { border-color: rgba(116, 199, 255, 0.34); gap: 10px; }
 .modal--term .term-card__name { color: var(--term); }
 
@@ -1069,3 +1070,138 @@ html, body, #root {
   padding: 15px 16px; border-radius: 8px;
   background: var(--panel); border: 1px solid var(--edge);
 }
+
+/* --- what each settlement has, in the list ---------------------------------
+   Two glyphs per row: a notice board and a signal fire. The fire has three
+   states rather than two, because whether the hill above a village can see
+   anything is fixed by the terrain and is the fact that decides whether
+   laying one is worth 3 days. */
+
+.roster__signals {
+  display: flex; gap: 5px; font-size: 12px; line-height: 1;
+  color: rgba(164, 179, 186, 0.4);
+}
+.roster__pip.is-on { color: var(--amber); }
+/* Not "unbuilt" but "not worth building". Dimmer than either other state. */
+.roster__pip.is-blind { color: rgba(164, 179, 186, 0.22); }
+
+/* The message time, where the contact word sits on rows that have no route. */
+.roster__state em {
+  font-style: normal; color: var(--amber-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.roster__legend {
+  display: flex; flex-wrap: wrap; gap: 4px 10px;
+  margin: 9px 2px 0; font-size: 10px; line-height: 1.5;
+  letter-spacing: 0.04em; color: rgba(164, 179, 186, 0.45);
+}
+
+/* An era's opening chapter, played over the game screen it is about to hand
+   the player. `.story` is already opaque and full-bleed; this only has to sit
+   above the HUD and the map. */
+.story--opening { z-index: 120; }
+.story__skip {
+  position: absolute; top: 18px; right: 18px; z-index: 60;
+  font: inherit; font-size: 12px; letter-spacing: 0.1em; cursor: pointer;
+  padding: 6px 12px; border-radius: 6px;
+  color: var(--ink-dim); background: rgba(14, 22, 26, 0.7); border: 1px solid var(--edge);
+}
+.story__skip:hover { color: var(--ink); border-color: rgba(255, 179, 71, 0.45); }
+
+/* --- the briefing ----------------------------------------------------------
+   Between the opening scene and the map: what the era is for, what ends it,
+   and how the loop is actually played. Scrolls, because Era 1 has six points
+   and a laptop is not tall. */
+
+.briefing {
+  position: absolute; inset: 0; z-index: 1; overflow-y: auto;
+  display: grid; align-content: start; justify-items: center;
+  gap: 10px; padding: 34px 24px 20px;
+  animation: skit-rise 0.3s ease-out;
+}
+.briefing > * { width: min(760px, 100%); }
+.briefing__era {
+  margin: 0; font-size: 12px; letter-spacing: 0.34em; text-transform: uppercase;
+  color: var(--violet); text-align: center;
+}
+.briefing__era span { opacity: 0.5; margin: 0 4px; }
+.briefing__title {
+  margin: 0; font-size: clamp(22px, 4vw, 34px); text-align: center;
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--amber-soft);
+}
+.briefing__objective {
+  margin: 0 0 2px; font-size: 16px; line-height: 1.7; text-align: center;
+  color: var(--ink);
+}
+
+.briefing__stakes { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.briefing__stakes--one { grid-template-columns: minmax(0, 1fr); }
+/* Where the era starts from, and what it adds up to. Neither is a win or a
+   loss, so neither takes the green or the red. */
+.briefing__from { border-left-color: var(--violet) !important; }
+.briefing__from h2 { color: var(--violet) !important; }
+.briefing__stakes--one section { border-left-color: var(--amber); }
+.briefing__stakes--one h2 { color: var(--amber-soft); }
+.briefing__stakes--one p { color: var(--ink); }
+.briefing__stakes section {
+  padding: 13px 15px; border-radius: 8px;
+  background: var(--panel); border: 1px solid var(--edge);
+  border-left: 2px solid var(--hardened);
+}
+.briefing__against { border-left-color: var(--down); }
+.briefing__stakes h2 {
+  margin: 0 0 6px; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--hardened);
+}
+.briefing__against h2 { color: var(--down); }
+.briefing__stakes p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink-dim); }
+
+.briefing__how-head {
+  margin: 4px 0 0; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.briefing__how {
+  list-style: none; counter-reset: how; margin: 0; padding: 0;
+  display: grid; gap: 8px;
+}
+.briefing__how li {
+  counter-increment: how;
+  display: grid; grid-template-columns: 22px 1fr; gap: 2px 10px;
+  padding: 9px 14px; border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03); border: 1px solid var(--edge);
+}
+.briefing__how li::before {
+  content: counter(how);
+  grid-row: 1 / span 2;
+  font-size: 12px; color: var(--amber); opacity: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+.briefing__how strong { font-size: 14px; color: var(--ink); font-weight: 700; }
+/* The primer is read, not scanned, so its points get room to breathe. */
+.briefing__how--primer li { padding: 12px 15px; gap: 4px 10px; }
+.briefing__how--primer strong { color: var(--amber-soft); }
+.briefing__catch {
+  margin-top: 5px; padding-left: 9px;
+  border-left: 2px solid rgba(226, 112, 93, 0.5);
+  color: rgba(164, 179, 186, 0.85) !important;
+}
+.briefing__catch em {
+  display: block; font-style: normal;
+  font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--down);
+}
+.briefing__how span { font-size: 13px; line-height: 1.6; color: var(--ink-dim); }
+
+/* Sticky rather than sized to fit: the page is 6 points long and a short
+   window would otherwise put the only way into the game below the fold. It
+   sits over the text, so unlike the rest of the page it needs to be opaque —
+   and it opts out of the 760px column its siblings share. */
+.briefing__begin {
+  position: sticky; bottom: 14px; z-index: 2;
+  width: auto; justify-self: center; margin-top: 10px;
+  padding: 10px 26px; font-size: 13px;
+  background: #3a2a14; border-color: rgba(255, 179, 71, 0.75);
+  box-shadow: 0 10px 34px rgba(8, 13, 16, 0.95);
+}
+.briefing__begin:hover { background: #4a3418; }

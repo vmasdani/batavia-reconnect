@@ -49,6 +49,21 @@ export interface UiText {
   show: string
   finish: string
   readAgain: string
+  /** Leave an era's opening scene without reading it. */
+  skip: string
+  /** The briefing card between the opening scene and the map. */
+  briefing: string
+  /** The primer card that explains the era's communication. */
+  primer: string
+  primerLead: string
+  butNot: string
+  soWhat: string
+  toTheWork: string
+  objective: string
+  toWin: string
+  pushingBack: string
+  howToPlay: string
+  startEra: string
   endTitle: string
   endPremise: string
 }
@@ -79,6 +94,18 @@ export const UI: Record<Lang, UiText> = {
     show: 'Show',
     finish: 'Finish',
     readAgain: 'Read again',
+    skip: 'skip',
+    briefing: 'the work',
+    primer: 'how a message moves',
+    primerLead: 'Where you are starting from',
+    butNot: 'What it cannot do',
+    soWhat: 'What it adds up to',
+    toTheWork: 'The work',
+    objective: 'The work',
+    toWin: 'To finish the era',
+    pushingBack: 'What pushes back',
+    howToPlay: 'How it is played',
+    startEra: 'Begin day 1',
     endTitle: 'The First Internet',
     endPremise: 'Forty-one years. The man who understood it best did not live to see the end of it.',
   },
@@ -107,6 +134,18 @@ export const UI: Record<Lang, UiText> = {
     show: 'Tampilkan',
     finish: 'Selesai',
     readAgain: 'Baca lagi',
+    skip: 'lewati',
+    briefing: 'pekerjaannya',
+    primer: 'bagaimana pesan bergerak',
+    primerLead: 'Titik berangkatnya',
+    butNot: 'Yang tidak bisa dilakukannya',
+    soWhat: 'Jadinya bagaimana',
+    toTheWork: 'Pekerjaannya',
+    objective: 'Pekerjaannya',
+    toWin: 'Untuk menyelesaikan era ini',
+    pushingBack: 'Yang melawan',
+    howToPlay: 'Cara memainkannya',
+    startEra: 'Mulai hari 1',
     endTitle: 'Internet Pertama',
     endPremise:
       'Empat puluh satu tahun. Orang yang paling paham soal itu tidak hidup sampai akhirnya.',

@@ -1,5 +1,23 @@
 node_modules/
 dist/
 
+# Build artifacts
+tsconfig.tsbuildinfo
+.vite/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# npm lockfile — this repo uses pnpm
+package-lock.json
+
 # Cached DEM tiles from `npm run bake`. Re-downloadable, and binary.
 tools/.dem-cache/

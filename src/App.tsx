@@ -13,6 +13,8 @@ import { Fragment, useMemo, useState } from 'react'
 import { PixiMap } from './PixiMap'
 import { useGame, reachableFrom, availableSkits } from './store'
 import { SkitChip, SkitOverlay } from './Skit'
+import { EraOpening } from './EraOpening'
+import type { Lang } from './lang'
 import { PARTY, type PartyMember } from './party'
 import { useBacksound } from './useBacksound'
 import { DayIcon, KIT_ICON, HardenedIcon, RaidIcon, RESOURCE_ICON } from './icons'
@@ -509,7 +511,7 @@ function ReportDialog() {
   )
 }
 
-export default function App({ onExit }: { onExit: () => void }) {
+export default function App({ lang, onExit }: { lang: Lang; onExit: () => void }) {
   const world = useGame((s) => s.world)
   const sim = useGame((s) => s.sim)
   const endDay = useGame((s) => s.endDay)
@@ -838,6 +840,7 @@ export default function App({ onExit }: { onExit: () => void }) {
       )}
       <ReportDialog />
       <SkitOverlay />
+      <EraOpening era={1} lang={lang} />
     </div>
   )
 }
