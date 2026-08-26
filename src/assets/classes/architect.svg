@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none"
+     stroke="#ffb347" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <title>Architect</title>
+  <!-- Star topology: one mind holding every link in view at once. -->
+  <path d="M24 5 41 14.5v19L24 43 7 33.5v-19z" stroke="#6f7f88" stroke-width="1.2" opacity="0.75"/>
+  <path d="M24 24 24 12M24 24 34.5 30M24 24 13.5 30M24 24 34.5 18M24 24 13.5 18" opacity="0.85"/>
+  <circle cx="24" cy="24" r="4.4" fill="#ffb347" stroke="none"/>
+  <circle cx="24" cy="12" r="2.6" fill="#0d1418"/>
+  <circle cx="34.5" cy="18" r="2.2" fill="#0d1418"/>
+  <circle cx="34.5" cy="30" r="2.2" fill="#0d1418"/>
+  <circle cx="13.5" cy="30" r="2.2" fill="#0d1418"/>
+  <circle cx="13.5" cy="18" r="2.2" fill="#0d1418"/>
+</svg>

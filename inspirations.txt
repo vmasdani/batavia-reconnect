@@ -1,0 +1,158 @@
+INSPIRATIONS
+============
+
+This game was not designed from a design document. It accumulated.
+It is the residue of years of playing games, watching anime, and living
+inside pop culture — things that stuck, got chewed on for a long time,
+and eventually surfaced as a single idea about rebuilding a network in a
+dead Indonesia.
+
+What follows is the honest list of where each piece came from.
+
+
+DIRECT INSPIRATIONS
+===================
+
+CONCEPT — Dr. Stone
+-------------------
+The spine of the whole thing. Civilization is gone, and one person with
+an education rebuilds it from first principles, in order, each invention
+standing on the last. The joy is not in the fighting; it is in the tech
+tree being *earned* — you cannot have a radio before you have copper
+wire, and you cannot have copper wire before you have someone willing to
+dig. Dr. Stone also gave permission for the tone: rebuilding is allowed
+to be exciting rather than grim.
+
+APOCALYPSE & THE CONSEQUENCES OF WAR — Fallout
+----------------------------------------------
+The texture of the ruined world. Not just "everything is broken" but
+what people *did* with the broken pieces: scavenger economies, settlements
+with their own politics, infrastructure repurposed by people who do not
+understand it. Fallout is also where the Copper War comes from — the idea
+that a resource becomes a reason for violence, and that the old world's
+leftovers are a finite, contested inheritance.
+
+ISOLATED CIVILIZATION TRYING TO RECONNECT — Death Stranding
+-----------------------------------------------------------
+The emotional thesis. Connection as the actual objective, not a means to
+one. Every settlement joined to the network is a real gain, and the map
+slowly filling with links is the reward. Death Stranding also proved that
+logistics and infrastructure can carry a story — that the act of laying a
+line between two places is meaningful on its own.
+
+TIMESPAN BETWEEN YEARS — Like a Dragon: Stranger Than Heaven (RGG)
+------------------------------------------------------------------
+The structure of jumping across years, with the world and the cast
+visibly aged between chapters. The project takes forty years because
+forty years is what it takes. Characters get old, retire, die, and hand
+their work to someone younger. The time skip is not a narrative shortcut;
+it is the point.
+
+SKIT MODE — Tales of series
+---------------------------
+Short, optional, character-driven conversations that trigger off world
+state. They carry almost none of the plot and almost all of the warmth.
+The specialists are the emotional through-line, and skits are how the
+player actually gets to know them — the radio operator complaining about
+interference, the exchange veteran explaining how it used to work.
+
+"DISPATCHING" GAMEPLAY — Dispatch, 911 Operator
+------------------------------------------------
+The moment-to-moment texture of running the network. You are not out
+there doing it; you are the one receiving the call, deciding who goes,
+and living with the fact that you only had two teams and three problems.
+Triage under incomplete information is a better fit for a communications
+game than direct control ever would be.
+
+PIPELINE BUILDING & CRAFTING — Factorio
+----------------------------------------
+The systems layer. Throughput, bottlenecks, intermediate components,
+production chains that have to be planned backwards from what you want.
+Factorio is why the network has bandwidth and latency and not just a
+"connected / not connected" flag — the link is a *pipe*, and pipes can be
+saturated, starved, and rerouted.
+
+"INFORMATION IS KEY" — Metal Gear Solid
+----------------------------------------
+The philosophy underneath everything. MGS2 in particular: who controls
+the flow of information controls what people believe, and a network is
+never politically neutral. This is where the later eras get their
+conflicts — WHO CONTROLS THE NETWORK is an MGS question. Also the codec:
+disembodied voices over a radio link, delivering exposition, advice, and
+personality, are the oldest form of connection in games and still the
+warmest.
+
+
+OTHER GAMES THIS COULD DRAW FROM
+================================
+
+Possible additional inspirations, grouped by what they would contribute.
+
+NETWORK AS A LIVING, FRAGILE SYSTEM
+-----------------------------------
+- Mini Metro — the purest expression of "you are designing a topology,
+  not placing buildings." Watching a clean network degrade into spaghetti
+  as demand grows is exactly the failure mode the player should feel.
+- Opus Magnum / Zachtronics generally — the solution-space feeling: many
+  valid topologies, scored on cost, latency, and reliability, with the
+  player quietly competing against their own earlier designs.
+- Transport Tycoon / OpenTTD — routing, congestion, and the long-term
+  consequences of a line you laid twenty years ago and never revisited.
+- Uplink / Hacknet — the network seen from the inside, as something you
+  navigate rather than something you look down on. Useful for the later
+  packet-switching eras.
+
+REBUILDING AND SETTLEMENT MANAGEMENT
+------------------------------------
+- Frostpunk — the moral cost of keeping infrastructure alive, and laws
+  that permanently change what your society is. Directly applicable to
+  the "who controls the network" conflicts.
+- Rimworld — colonists as individuals with skills, histories, and
+  relationships, who can be lost. Fits the specialist system.
+- Banished / Against the Storm — settlement survival where the failure is
+  slow and systemic rather than a sudden defeat.
+- Terra Nil — restoration as a win condition. A useful counterweight to
+  Fallout's fatalism.
+
+STORY, TIME, AND CHARACTER
+--------------------------
+- Disco Elysium — dialogue-heavy, politically literate, willing to let
+  characters argue about the future of a broken place. A model for how
+  the settlement negotiations could read.
+- Pentiment — decades passing, consequences landing on the next
+  generation, the same town seen at different ages.
+- 80 Days — travel and communication across a mapped world, with the
+  route itself as the narrative.
+- Return of the Obra Dinn — reconstructing what happened from fragmentary
+  evidence; good shape for the "what actually caused the collapse"
+  backstory.
+
+SIGNAL, RADIO, AND ISOLATION
+----------------------------
+- Firewatch — a relationship conducted entirely over a radio link.
+- Signalis / Oxenfree — radio as texture, atmosphere, and interference.
+- Papers, Please — bureaucratic triage under time pressure, with people
+  on the other side of the desk. Close cousin to the dispatch layer.
+- Beholder / This War of Mine — the human cost of decisions made from a
+  desk, at a distance.
+
+INDUSTRY AND PRODUCTION CHAINS
+------------------------------
+- Dyson Sphere Program — scaling production across a whole map, and the
+  logistics of distance.
+- Shapez — pure throughput puzzles, useful for component manufacturing.
+- Anno series — production chains tied to regions with different
+  resources, which fits an archipelago map well.
+- Workers & Resources: Soviet Republic — infrastructure planning where
+  power, transport, and labour all have to line up, and nothing works
+  until all three do.
+
+ANIME AND NON-GAME
+------------------
+- Ghost in the Shell — networks as a substrate for society and identity;
+  the political weight of infrastructure.
+- Legend of the Galactic Heroes — long timespans, generational politics,
+  institutions outliving the people who founded them.
+- Connections (James Burke) — the documentary logic of one invention
+  making the next one possible, which is the tech tree in essay form.
+- The Wire, season by season — institutions as the real protagonist.

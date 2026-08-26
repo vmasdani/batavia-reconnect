@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none"
+     stroke="#ffb347" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <title>Quartermaster</title>
+  <!-- A crate on the move: the route matters as much as the cargo. -->
+  <path d="M9 33.5 6 39h36l-3-5.5" stroke="#6f7f88" stroke-width="1.2" opacity="0.7"/>
+  <path d="M24 9 37 16v14l-13 7-13-7V16z"/>
+  <path d="M11 16 24 23l13-7M24 23v14" opacity="0.8"/>
+  <path d="M24 23 24 37" stroke="#ffb347" opacity="0.5"/>
+  <path d="M17.5 12.5 30.5 19.5" opacity="0.55"/>
+  <circle cx="24" cy="23" r="2.4" fill="#ffb347" stroke="none"/>
+</svg>

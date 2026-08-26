@@ -1,0 +1,83 @@
+<!doctype html>
+<meta charset="utf-8" />
+<style>html,body{margin:0;background:transparent}canvas{display:block}</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "/node_modules/three/build/three.module.js",
+    "three/webgpu": "/node_modules/three/build/three.webgpu.js",
+    "three/tsl": "/node_modules/three/build/three.tsl.js",
+    "three/addons/": "/node_modules/three/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+  import * as THREE from 'three'
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+
+  const SIZE = 256
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true })
+  renderer.setSize(SIZE, SIZE)
+  renderer.setClearColor(0x000000, 0)
+  document.body.appendChild(renderer.domElement)
+
+  const scene = new THREE.Scene()
+
+  // Match the game's projection exactly: a true 2:1 isometric is an
+  // orthographic camera 45 degrees round and atan(0.5) up from the ground.
+  const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 100)
+  const elevation = Math.atan(0.5)
+  const azimuth = Math.PI / 4
+
+  // Key light from over the camera's shoulder, plus fill and a cool bounce, so
+  // the sprite reads with the same light direction as the map's tile shading.
+  scene.add(new THREE.AmbientLight(0xffffff, 1.5))
+  const key = new THREE.DirectionalLight(0xfff1dd, 2.6)
+  key.position.set(4, 7, 5)
+  scene.add(key)
+  const fill = new THREE.DirectionalLight(0x9fc4d8, 1.0)
+  fill.position.set(-5, 2, -3)
+  scene.add(fill)
+
+  const loader = new GLTFLoader()
+  const gltf = await loader.loadAsync('/assets/Blue truck/File/Blue_truck.glb')
+  const model = gltf.scene
+
+  // Centre the model on its own bounding box and scale it to fill the frame.
+  const pivot = new THREE.Group()
+  const box = new THREE.Box3().setFromObject(model)
+  const centre = box.getCenter(new THREE.Vector3())
+  const size = box.getSize(new THREE.Vector3())
+  model.position.sub(centre)
+  pivot.add(model)
+  scene.add(pivot)
+
+  const radius = Math.max(size.x, size.y, size.z) * 0.62
+  camera.left = -radius
+  camera.right = radius
+  camera.top = radius
+  camera.bottom = -radius
+  camera.near = 0.01
+  camera.far = radius * 40
+  camera.updateProjectionMatrix()
+
+  const dist = radius * 12
+  camera.position.set(
+    Math.cos(elevation) * Math.sin(azimuth) * dist,
+    Math.sin(elevation) * dist,
+    Math.cos(elevation) * Math.cos(azimuth) * dist,
+  )
+  camera.lookAt(0, 0, 0)
+
+  window.__renderYaw = (degrees) => {
+    pivot.rotation.y = (degrees * Math.PI) / 180
+    renderer.render(scene, camera)
+    return renderer.domElement.toDataURL('image/png')
+  }
+  window.__ready = true
+</script>
+<script>
+  window.addEventListener('error', (e) => { window.__err = String(e.message) })
+  window.addEventListener('unhandledrejection', (e) => { window.__err = String(e.reason) })
+</script>

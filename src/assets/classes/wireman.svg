@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none"
+     stroke="#ffb347" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <title>Wireman</title>
+  <!-- Soldering iron meeting a live antenna feed; the hands that make it work. -->
+  <path d="M38 8 27.5 18.5" stroke-width="3.6" opacity="0.9"/>
+  <path d="M27.5 18.5 22 24l-1.4-4.6L25 15z"/>
+  <circle cx="18.5" cy="27.5" r="3" fill="#ffb347" stroke="none"/>
+  <path d="M9 41V27" stroke="#c9c2b4"/>
+  <path d="M6.5 41h5" stroke="#c9c2b4"/>
+  <path d="M9 27 6 22.5M9 27l3-4.5" stroke="#c9c2b4" stroke-width="1.2"/>
+  <path d="M13.5 22.5a7.5 7.5 0 0 1 0-7.5" opacity="0.75"/>
+  <path d="M17.5 25a12.5 12.5 0 0 0 0-12.5" opacity="0.45"/>
+</svg>

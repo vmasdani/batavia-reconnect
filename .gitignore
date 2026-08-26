@@ -1,0 +1,5 @@
+node_modules/
+dist/
+
+# Cached DEM tiles from `npm run bake`. Re-downloadable, and binary.
+tools/.dem-cache/

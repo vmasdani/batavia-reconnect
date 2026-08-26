@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none"
+     stroke="#ffb347" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <title>Warden</title>
+  <!-- A shield around a mast: the job is keeping the hardware standing. -->
+  <path d="M24 4 40 10v13c0 9.4-6.6 17.4-16 21-9.4-3.6-16-11.6-16-21V10z"/>
+  <path d="M24 4v40" stroke="#6f7f88" stroke-width="1" opacity="0.45"/>
+  <path d="M18.5 34 24 14l5.5 20" stroke="#c9c2b4" stroke-width="1.5"/>
+  <path d="M20.2 28h7.6M19.2 31.5h9.6M21.4 24h5.2" stroke="#6f7f88" stroke-width="1.2"/>
+  <circle cx="24" cy="11" r="2.6" fill="#ffb347" stroke="none"/>
+  <path d="M15.5 34h17" stroke="#c9c2b4" stroke-width="1.8"/>
+</svg>
