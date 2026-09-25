@@ -94,6 +94,19 @@ export interface Alert {
  */
 export type Supply = 'genset' | 'battery' | 'free' | 'none'
 
+/**
+ * Which half of the dial a site transmits on.
+ *
+ * `ground` is the whole of the old model: a signal that follows the ground,
+ * short and dependable, a little further after dark. `sky` bounces — it dies a
+ * few kilometres out, is deaf through a wide skip zone, and then comes down
+ * again a long way off at full strength.
+ *
+ * A site holds one, chosen at the bench when it is brought on air. A hardened
+ * one holds both, which is what makes it a relay rather than a station.
+ */
+export type Band = 'ground' | 'sky'
+
 export interface Settlement {
   id: string
   name: string
@@ -113,6 +126,17 @@ export interface Settlement {
   operator: boolean
   /** 0 to 100. At 100 the set drops off the air until someone visits it. */
   wear: number
+  /** Which half of the dial this set transmits on. See `Band`. */
+  band: Band
+  /**
+   * How well the set was netted onto its channel, 0.6 to 1, from the bench in
+   * `tuning.ts`. Multiplies the circuit's margin, so a sloppy tune costs speed
+   * on every link the site carries and nothing else.
+   *
+   * Everything standing on day one is 1: whoever built it did it properly, and
+   * the authored opening should read exactly as it always has.
+   */
+  trim: number
   /** Genset with no fuel in it. Silent until somebody hauls a drum out. */
   cold: boolean
   alert?: Alert
@@ -358,7 +382,7 @@ function nearLand(tx: number, ty: number): boolean {
 // --- settlements -------------------------------------------------------------
 
 interface SettlementSeed
-  extends Omit<Settlement, 'tx' | 'ty' | 'supply' | 'operator' | 'wear' | 'cold'> {}
+  extends Omit<Settlement, 'tx' | 'ty' | 'supply' | 'operator' | 'wear' | 'cold' | 'band' | 'trim'> {}
 
 const SEEDS: SettlementSeed[] = [
   {
@@ -472,6 +496,10 @@ export const SETTLEMENTS: Settlement[] = SEEDS.map((seed) => ({
   operator: seed.stage >= 3,
   wear: 0,
   cold: false,
+  // Everything that was already up got there on the ground wave, netted
+  // properly. Era 1's opening circuits are unchanged by any of this.
+  band: 'ground',
+  trim: 1,
 }))
 
 /**

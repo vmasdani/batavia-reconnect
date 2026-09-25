@@ -28,6 +28,7 @@ import {
 } from './world'
 import { PARTY, type PartyMember } from './party'
 import { newSim, refreshLinks, RATION_CAP as ERA1_RATION_CAP, type LogEntry, type Move, type Sim } from './sim'
+import { autoParley, dealWants, type ParleyResult, type ParleySeat } from './parley'
 
 const HQ = 'batavia'
 
@@ -82,35 +83,12 @@ const FORAGE_RATIONS = 4
 /**
  * Anything past this spoils before it can be carried anywhere.
  *
- * Deliberately the same number as `OFFER_FULL`: a full store is exactly the
- * most that can ever be offered, so once the larder is full the only way to
- * make a settlement easier to win over is to go back and ask again.
+ * It used to be tied to how good an offer the crew could make, which had that
+ * curve backwards: the larder is near-empty during the first parleys and full
+ * by the time there is nothing left to win. What can be offered is now a card
+ * with a flat price, in `parley.ts`, and this is a shelf life again.
  */
 const RATION_CAP = 40
-
-/** Rations that count as a full larder when working out what can be offered. */
-const OFFER_FULL = 40
-
-/**
- * How much easier each previous attempt makes the next one.
- *
- * Without this a settlement that has already said no is exactly as hard as one
- * that has never been asked, and three days of walking buys nothing at all —
- * which in play reads as the game cheating rather than as people being wary.
- * They do remember you came.
- */
-const ATTEMPT_BONUS = 0.07
-const ATTEMPT_BONUS_CAP = 0.21
-
-/**
- * Who is standing in front of them changes the answer. Mel can say what New
- * Batavia actually has and when it would arrive; Tajuddin arrives armed, which
- * is reassuring to exactly the settlements that were never going to say no.
- */
-const PARLEY_BONUS: Record<string, number> = {
-  Quartermaster: 0.12,
-  Warden: -0.08,
-}
 
 /**
  * Days a message sits at a settlement waiting for somebody heading the right
@@ -245,7 +223,7 @@ export interface TaskChoice {
 export type Letter =
   | { state: 'unsent' }
   | { state: 'out'; sentOn: number; due: number }
-  | { state: 'back'; due: number }
+  | { state: 'back'; leftOn: number; due: number }
   | { state: 'home'; on: number }
 
 export interface Survey {
@@ -445,9 +423,31 @@ export function fireLinks(world: World, survey: Survey): Array<[string, string]>
  * end, because they were watching the hill.
  */
 export function messageDays(world: World, survey: Survey, to: string, from = HQ): number | null {
+  return search(world, survey, to, from)?.days ?? null
+}
+
+/**
+ * The settlements a message actually passes through, in order, ending at `to`.
+ *
+ * The map draws the letter to Tangerang crossing the region, and a drawn route
+ * that disagreed with the number in the panel would be worse than no route at
+ * all — so both come out of the same search. See `messageRoute` callers in
+ * `PixiMap.tsx`.
+ */
+export function messageRoute(world: World, survey: Survey, to: string, from = HQ): string[] | null {
+  return search(world, survey, to, from)?.route ?? null
+}
+
+/** Cheapest way for a message to get from `from` to `to`, or nothing. */
+function search(
+  world: World,
+  survey: Survey,
+  to: string,
+  from: string,
+): { days: number; route: string[] } | null {
   if (to !== from && contactOf(survey, to) !== 'talking') return null
   if (contactOf(survey, from) !== 'talking') return null
-  if (to === from) return 0
+  if (to === from) return { days: 0, route: [from] }
 
   /** Every way out of a settlement, and what taking it costs in days. */
   const routes = new Map<string, Array<{ to: string; days: number }>>()
@@ -468,6 +468,7 @@ export function messageDays(world: World, survey: Survey, to: string, from = HQ)
   }
 
   const best = new Map<string, number>([[from, 0]])
+  const cameFrom = new Map<string, string>()
   const queue = [from]
   while (queue.length) {
     queue.sort((a, b) => (best.get(a) ?? 0) - (best.get(b) ?? 0))
@@ -480,10 +481,19 @@ export function messageDays(world: World, survey: Survey, to: string, from = HQ)
       const step = cost + leg.days
       if (step >= (best.get(leg.to) ?? Infinity)) continue
       best.set(leg.to, step)
+      cameFrom.set(leg.to, here)
       queue.push(leg.to)
     }
   }
-  return best.get(to) ?? null
+
+  const days = best.get(to)
+  if (days === undefined) return null
+  const route = [to]
+  for (let at = to; at !== from; ) {
+    at = cameFrom.get(at)!
+    route.unshift(at)
+  }
+  return { days, route }
 }
 
 // --- orders ------------------------------------------------------------------
@@ -595,20 +605,94 @@ export function daysLeftAfterToday(survey: Survey, memberId: string): number | n
 
 // --- the day -----------------------------------------------------------------
 
-/** mulberry32, seeded per day so a resolved day always resolves the same way. */
-function rng(seed: number): () => number {
-  let a = seed >>> 0
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0
-    let t = Math.imul(a ^ (a >>> 15), 1 | a)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
-
 export interface SurveyDay {
   survey: Survey
   moves: Move[]
+}
+
+// --- the exchange at the gate -------------------------------------------------
+
+/**
+ * Where the courier card would carry this settlement's word.
+ *
+ * The nearest other place that is not New Batavia: kin are in the next town,
+ * not in the town the strangers came from, and offering to carry word home to
+ * ourselves is not an offer. Straight-line rather than by road, because it is a
+ * relationship and not a route.
+ */
+function kinOf(world: World, id: string): Settlement {
+  const here = world.settlements.find((s) => s.id === id)!
+  return world.settlements
+    .filter((s) => s.id !== id && s.id !== HQ)
+    .sort((a, b) => distanceKm(here, a) - distanceKm(here, b))[0]
+}
+
+/**
+ * What every settlement in the region wants, dealt once and cached.
+ *
+ * The deal only depends on which settlements exist, and that list is baked, so
+ * this is computed on the first parley of a session and never again.
+ */
+let wants: ReturnType<typeof dealWants> | null = null
+const wantsIn = (world: World) => (wants ??= dealWants(world.settlements.map((s) => s.id)))
+
+/** Everything `parley.ts` needs about a conversation that is about to happen. */
+function parleySeat(
+  world: World,
+  survey: Survey,
+  member: PartyMember,
+  place: Settlement,
+  before: 'found' | 'wary',
+): ParleySeat {
+  const kin = kinOf(world, place.id)
+  return {
+    want: wantsIn(world).get(place.id)!,
+    memberId: member.id,
+    memberName: member.name,
+    className: member.className,
+    target: place.id,
+    targetName: place.name,
+    before,
+    attempts: survey.attempts[place.id] ?? 0,
+    rations: survey.rations,
+    // A fire promised to people who can see for themselves that their own ridge
+    // looks at nothing is not a weak offer. It is a tell.
+    blindHill: fireReach(world, place.id).length === 0,
+    kinId: kin.id,
+    kinName: kin.name,
+  }
+}
+
+/**
+ * Who sits down at a gate tonight, worked out before the day is resolved.
+ *
+ * The day loop is a batch — three people can finish three different parleys on
+ * one click of End day — so the exchanges cannot be played from inside it. The
+ * store asks this first, plays each seat in turn, and hands the outcomes back
+ * to `resolveSurveyDay`.
+ *
+ * Deduplicated by settlement: two people arriving at the same gate on the same
+ * day is a mistake the player made, and it should cost them the second pair of
+ * legs rather than open the same conversation twice.
+ */
+export function parleySeats(world: World, survey: Survey): ParleySeat[] {
+  const byId = new Map(world.settlements.map((s) => [s.id, s]))
+  const seats: ParleySeat[] = []
+  const taken = new Set<string>()
+  // Nothing happens on a day that starts with an empty store: `resolveSurveyDay`
+  // spends it foraging and never reaches the crew loop at all.
+  if (survey.rations <= 0) return seats
+  for (const member of SURVEY_CREW) {
+    const state = survey.crew[member.id]
+    if (state.hurtDays > 0 || state.task.kind !== 'parley' || state.daysLeft !== 1) continue
+    const place = byId.get(state.task.target)
+    const before = place ? contactOf(survey, place.id) : 'unknown'
+    if (!place || taken.has(place.id)) continue
+    if (before !== 'found' && before !== 'wary') continue
+    taken.add(place.id)
+    seats.push(parleySeat(world, survey, member, place, before))
+  }
+  return seats
 }
 
 /** Rations the crew will eat tonight, given where they are standing. */
@@ -626,7 +710,19 @@ export function surveyIncome(survey: Survey): number {
   return HOME_RATIONS + talking.length * SHARED_RATIONS
 }
 
-export function resolveSurveyDay(world: World, prev: Survey): SurveyDay {
+/**
+ * One day, resolved.
+ *
+ * `results` carries the outcome of every exchange the player actually played,
+ * keyed by the crew member who was at the table. A seat that is missing from it
+ * is played blind by `autoParley` — which is what the skip button leaves behind
+ * and what lets `tools/survey-balance.ts` drive forty days without a screen.
+ */
+export function resolveSurveyDay(
+  world: World,
+  prev: Survey,
+  results: Record<string, ParleyResult> = {},
+): SurveyDay {
   const survey: Survey = {
     ...prev,
     contact: { ...prev.contact },
@@ -636,7 +732,6 @@ export function resolveSurveyDay(world: World, prev: Survey): SurveyDay {
     crew: Object.fromEntries(Object.entries(prev.crew).map(([id, c]) => [id, { ...c }])),
     log: [],
   }
-  const roll = rng(survey.day * 7919)
   const moves: Move[] = []
   const byId = new Map(world.settlements.map((s) => [s.id, s]))
   const say = (kind: LogEntry['kind'], text: string) => survey.log.push({ day: survey.day, kind, text })
@@ -694,28 +789,36 @@ export function resolveSurveyDay(world: World, prev: Survey): SurveyDay {
             landed.note = 'Already in'
             break
           }
-          // What can be offered is what is in the store. Bayu's answer is
-          // always "nothing", and an empty larder makes that answer sound
-          // like the truth rather than a kindness.
-          const offer = Math.min(1, Math.max(0, survey.rations / OFFER_FULL))
-          const bonus = PARLEY_BONUS[member.className] ?? 0
-          const known = Math.min(ATTEMPT_BONUS_CAP, (survey.attempts[place.id] ?? 0) * ATTEMPT_BONUS)
+          // The exchange itself is `parley.ts`. What arrives here is only its
+          // outcome, because the player plays it in a modal between the click
+          // and the day — see `parleySeats`. A seat nobody sat down at is
+          // played blind by the same rules rather than by a second formula
+          // standing next to them, so the skip button and the balance tool can
+          // never drift away from what the cards actually do.
+          const seat = parleySeat(world, survey, member, place, before === 'wary' ? 'wary' : 'found')
           survey.attempts[place.id] = (survey.attempts[place.id] ?? 0) + 1
-          const win = (before === 'wary' ? 0.52 : 0.34) + offer * 0.28 + bonus + known
-          const draw = roll()
-          if (draw < win) {
+          const given = results[member.id]
+          const result = given && given.target === place.id ? given : autoParley(seat)
+          survey.rations = Math.max(0, survey.rations - result.rationsSpent)
+          if (result.rationsSpent > 0) {
+            say('info', `${result.rationsSpent} rations went over the gate at ${place.name}.`)
+          }
+          if (result.contact === 'talking') {
             survey.contact[place.id] = 'talking'
             say('good', `${place.name} is in. ${member.name} came away with a name to ask for and a share of their harvest.`)
             landed.note = 'They are in'
             landed.tone = 'good'
-          } else if (before === 'found' && draw < win + 0.3) {
+          } else if (result.contact === 'wary') {
             survey.contact[place.id] = 'wary'
             say('info', `${place.name} asked what New Batavia would charge. ${member.name} said nothing, and they liked that less.`)
             landed.note = 'They want a price'
           } else {
-            say('bad', `${place.name} told ${member.name} to go away. They will still be there next month.`)
-            landed.note = 'Told to leave'
-            landed.tone = 'bad'
+            // Ground held rather than gained. They had already asked the price
+            // and they are still asking it, which is not the same as being
+            // thrown out and should not read like it. A wrong offer costs the
+            // days it took to walk there and nothing that was already won.
+            say('info', `${place.name} is still asking what it would cost, and ${member.name} still has the same answer.`)
+            landed.note = 'Still wants a price'
           }
           break
         }
@@ -798,7 +901,7 @@ export function resolveSurveyDay(world: World, prev: Survey): SurveyDay {
       survey.letter = { state: 'unsent' }
       say('bad', `The letter reached ${byName(GOAL)} in ${days} days, and there is no longer a way to answer it.`)
     } else {
-      survey.letter = { state: 'back', due: survey.day + back }
+      survey.letter = { state: 'back', leftOn: survey.day, due: survey.day + back }
       say(
         'good',
         `${byName(GOAL)} has the letter, ${days} days out. They are writing back, and the answer is ${back} days behind it.`,

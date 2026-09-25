@@ -1,579 +1,418 @@
-GAME IDEA DRAFT
-================
-
-Working Title:
 NEW BATAVIA: RECONNECT
+======================
 
-Genre:
-- Browser-based management / strategy
-- Isometric 2.5D
-- Post-apocalyptic civilization rebuilding
-- Technology progression
-- Infrastructure / network management
-- Light exploration and survival
-- Character-driven progression
+Design document, synced with the build on 2026-08-29.
 
-Core Premise:
--------------
-Human civilization has collapsed.
+This file was originally a pitch draft. It is now two things at once, and
+the split is marked throughout:
 
-Modern communications infrastructure is gone:
-- Internet
-- Cellular networks
-- Data centers
-- Satellites
-- Power grids
-- Long-distance telecommunications
+    BUILT       running code, playable in the browser today
+    WRITTEN     script and reference material that exists, but has no
+                playable loop behind it yet
+    DESIGNED    intent only. No code, no script.
+
+Where the old draft and the build disagreed, the build won and the draft
+was corrected. The eras were renumbered along the way: what the pitch
+called eight eras is nine in the build, and the pitch's own
+"era-specific conflicts" list was off by one against its own
+progression list. Both are fixed below.
+
+
+STATUS AT A GLANCE
+==================
+
+BUILT
+-----
+- Era 0, the survey. A complete day loop with its own win condition.
+- Era 1, the first voice. A complete day loop with its own win condition.
+- Story mode: all 9 chapters readable end to end, in 2 languages.
+- Glossary: 42 technology terms, most with a drawn diagram and a real
+  historical citation.
+- Skits: 16 optional character scenes, 7 in Era 0 and 9 in Era 1.
+- The era relay card: the same errand timed once per era, 9 times.
+- 4 interactive pieces: the gate exchange, the tuning bench, the routing
+  walk-through, and the processor simulator.
+- Full Indonesian translation of everything above, with a language
+  picker that persists across reloads.
+- 6 headless checks that prove the parts a browser cannot.
+
+WRITTEN
+-------
+- Eras 2 through 8: opening scene, closing scene, premise and objective
+  for each, in both languages. Readable from the main menu. No day loop.
+- 8 characters who exist only in that script: Iwan, Sari, Ayu, Ratna,
+  Hendra, Dewi, Fajar, Anisa. They speak, but they are not party members
+  and cannot be recruited, because there is no era to recruit them into.
+
+DESIGNED
+--------
+- Factions. Named in this document, absent from the code.
+- The archipelago. The build stops at the Jakarta region: 13 settlements,
+  6 salvage sites and a handful of camps. Bandung, Surabaya, Sumatra and
+  the rest are spoken about in the script and never rendered.
+- Every conflict listed under an era that is not 0 or 1.
+
+
+PREMISE
+=======
+
+Human civilization has collapsed. Modern communications infrastructure
+is gone: internet, cellular networks, data centres, satellites, power
+grids, long-distance telecommunications.
 
 Humanity has been reduced to isolated settlements.
 
-The protagonist is a telecommunications graduate who eventually became a
-programmer. Although they never worked directly in telecommunications,
-their university knowledge gave them an understanding of networking,
-communications, electronics, and the fundamental architecture behind the
-Internet.
+The protagonist is a telecommunications graduate who became a
+programmer. He never worked in telecommunications, but university left
+him with an understanding of networking, communications, electronics,
+and the architecture underneath the Internet.
 
-After surviving the apocalypse in Jakarta, the protagonist realizes:
+After surviving the collapse in Jakarta, he concludes:
 
     "We don't need to rebuild the old world first.
      We need to reconnect the people who survived."
 
-They establish the RECONNECT project.
+He establishes the RECONNECT project.
 
 The ultimate objective:
 
     Rebuild a functional Internet-like network across Indonesia.
 
-The journey begins with people, scraps, batteries, and crude AM radios,
-and eventually reaches computers, packet switching, routing, and a
-TCP/IP-like internetworking system.
+It begins with people, scraps, batteries and crude AM radios, and ends
+with computers, packet switching, routing, and a TCP/IP-like
+internetworking system.
+
+It takes 38 years, and the man who understood it best is not alive at
+the end of them.
 
 
 SETTING
 =======
 
-Post-apocalyptic Indonesia.
-
-The starting region is Jakarta, renamed by survivors as:
+Post-apocalyptic Indonesia. The starting region is Jakarta, renamed by
+survivors:
 
     NEW BATAVIA
 
-Jakarta is initially surrounded by isolated settlements.
+BUILT — the region as it actually exists in the code. 13 settlements,
+each with a real longitude, latitude and mast height:
 
-The player gradually establishes communication with:
-
-    Jakarta
-       |
-    Tangerang
-       |
-    Serang
-
-and later expands toward:
-
+    New Batavia (HQ)     Tanjung Priok        Kemayoran
+    Menteng               Senayan              Kebayoran
+    Cawang                Pulo Gadung          Bekasi
+    Tangerang             Serang               Depok
     Bogor
-    Bandung
-    Cirebon
-    Yogyakarta
-    Semarang
-    Surabaya
 
-Eventually:
+Six salvage sites sit among them, each a named piece of the old world:
 
-    Sumatra
-    Bali
-    Kalimantan
-    Sulawesi
-    Other Indonesian islands
+    Gambir Exchange       telephone exchange
+    Muara Karang Station  power station
+    Manggarai Depot       railway depot
+    Jatinegara Market     electronics market
+    Cakung Warehouses     warehouse belt
+    Cilincing Scrapyards  scrapyard
 
-The map itself is the primary gameplay interface.
+DESIGNED — the expansion the script talks about and the map does not
+show: Bandung, Cirebon, Yogyakarta, Semarang, Surabaya, then Sumatra,
+Bali, Kalimantan, Sulawesi.
 
-The player can see:
-- Settlements
-- Roads
-- Rivers
-- Mountains
-- Ruins
-- Factories
-- Power infrastructure
-- Communication towers
-- Telegraph lines
-- Telephone lines
-- Relay stations
-- Radio towers
-- Data centers
-- Network links
-
-As civilization progresses, the map physically transforms from scattered
-survivor settlements into an interconnected technological civilization.
+The map is the primary interface. It is isometric, rendered in Pixi over
+a baked terrain, with settlements, roads, rivers, terrain, salvage
+sites, camps, masts, links and moving couriers drawn on it. React mounts
+it once and then stays out of the way.
 
 
-VISUAL STYLE
+THE NINE ERAS
+=============
+
+Each era has a title, a year, a premise the menu shows, and an objective.
+Eras 0 and 1 are playable. The rest are readable.
+
+ERA 0 — HUMANITY REBUILDS                                  2030   BUILT
+    Premise:   40 villages, and none of them can hear each other.
+    Objective: Walk the region on foot, find out who is still alive, and
+               count what is left in the store.
+    Tech:      Couriers, notice boards, signal fires, line of sight.
+
+ERA 1 — THE FIRST VOICE                                    2031   BUILT
+    Premise:   100 kilometres, and a radio that has to answer twice.
+    Objective: Raise a radio tower, a generator and a transmitter above
+               New Batavia, and hold the link to Tangerang through a
+               rainy season.
+    Tech:      AM, transmitter, antenna, generator, battery bank,
+               propagation and the skip zone.
+
+ERA 2 — THE COPPER WAR                                   2034   WRITTEN
+    Premise:   The network is on the ground now, where anyone can reach
+               it.
+    Objective: String 400 kilometres of telegraph across the Jakarta
+               region, and keep it standing while people cut it down.
+    Conflict:  Copper is currency. The line is a bank with no door on it.
+               It is not defended by guarding it; it is defended by
+               giving every village it passes an hour on it, so the wire
+               becomes theirs.
+
+ERA 3 — WHO OWNS THE LINE                                2039   WRITTEN
+    Premise:   Everyone depends on it. Nobody voted for it.
+    Objective: Run switchboards for 9 settlements, and negotiate who owns
+               each exchange as fast as you can build them.
+    Conflict:  The project decides who may speak to whom, at what price,
+               in what order. That is a government. Nobody elected it.
+               The answer is to hand the exchanges away and keep only the
+               standard.
+
+ERA 4 — MAKE, NOT FIND                                   2045   WRITTEN
+    Premise:   The old world runs out of parts before it runs out of
+               problems.
+    Objective: Build the glassworks and the chemistry under it, and make
+               valves that outlast the ones you can no longer find.
+    Conflict:  Salvage ends. The project stops being scavengers and
+               becomes manufacturers, which needs a chemical industry it
+               does not have.
+
+ERA 5 — THE COUNTING ROOM                                2048   WRITTEN
+    Premise:   It cannot remember anything, and it must never be switched
+               off.
+    Objective: Build a machine out of valves that does the arithmetic the
+               region runs on, and keep 3,000 of them alight through a
+               rainy season.
+    Event:     Pak Min dies. See below.
+
+ERA 6 — THE THINKING MACHINE                             2052   WRITTEN
+    Premise:   Memory you can hold in your hand, and the first person who
+               never saw the old world.
+    Objective: Thread core memory, build a machine that can hold a
+               routing table, and teach the generation born after the
+               war.
+    Conflict:  Dedicated circuits between every pair of cities do not
+               scale. Messages become packets and nodes start deciding
+               for themselves.
+
+ERA 7 — THE DRAWER RUNS OUT                              2061   WRITTEN
+    Premise:   Every router in the country runs on a chip that nobody
+               alive can make.
+    Objective: Stretch the last salvaged chips across 15 provinces, while
+               9 of them argue about a furnace at Cilegon.
+    Conflict:  Salvaged silicon is a thousand times better than anything
+               the workshop can build, and there is a fixed amount of it
+               left in the world. Every recovery is smaller than the
+               last.
+
+ERA 8 — A PATH NOBODY CHOSE                              2068   WRITTEN
+    Premise:   The last thing to build is the thing that makes you
+               unnecessary.
+    Objective: Run the fab until it works, publish everything you
+               learned, and hand the network to people who never asked
+               your permission.
+    Ending:    A message from New Batavia to Surabaya along a route
+               nobody specified. Bayu tries to reconstruct the path and
+               cannot. That is the win condition.
+
+
+ERA 0 — THE SURVEY (BUILT)
+==========================
+
+The day loop before there is anything to switch on. Four phases, the
+same deterministic seeding Era 1 uses, and nothing else in common with
+it: no hardware, no power, no circuits, no dusk window.
+
+The scarce thing is not copper. It is legs. A message moves only while
+somebody is carrying it, so distance is the entire cost model and the
+only thing the crew can spend is days.
+
+Crew: Bayu, Mel, Tajuddin. Pak Min has not been found yet.
+
+The one resource is rations. A settlement that will talk to you shares
+food, so contact pays for the walking that wins more contact, and a
+region that stays strangers starves the project slowly.
+
+What the crew can do with a day:
+
+- Walk somewhere. Roads, not straight lines.
+- Make their case at a gate. This opens the parley.
+- Nail a notice board to a gate, so a message left there waits 2 days for
+  the next courier going the right way instead of for the right one.
+- Lay a signal fire on the high ground above a settlement. Two fires that
+  can see each other carry one bit, 20 kilometres, instantly. That bit
+  means only "a runner is coming".
+- Send the letter. A village courier carries it. Once it leaves, it is
+  out of the crew's hands, which is the era's whole emotional argument.
+
+WIN CONDITION
+    8 settlements in contact, held for 7 consecutive days, with
+    Tangerang among them.
+
+THE GATE EXCHANGE (Parley.tsx)
+    One line saying what this village needs, four things the crew could
+    offer, one click. Deliberately the smallest screen in the era,
+    because the player reaches it in the middle of planning a day and
+    has to finish it in a glance.
+
+    An earlier version asked the player to decode two clues and spend
+    three offers against a running score. That is a game to sit down
+    with, not a stop on the way through a day, so it was cut.
+
+
+ERA 1 — THE FIRST VOICE (BUILT)
+===============================
+
+One turn is one day, in four phases that always run in the same order:
+
+    ASSIGN -> RESOLVE -> DUSK BROADCAST -> NIGHT
+
+The scarce thing is the four people. Every raid answered is a salvage
+run not made, and every circuit that goes down takes its settlements'
+population out of the evening's audience, which is where the rations
+come from.
+
+That feedback loop is the game: connect people, and the network pays for
+the next piece of itself.
+
+Resources:
+
+    copper    steel    cells    parts    fuel    rations
+
+Kits the workshop can build:
+
+    Radio tower kit    2 days    6 steel
+    Transmitter set    3 days    6 copper, 3 parts
+    Battery bank       2 days    4 cells, 2 copper
+    Generator set
+    Feeder
+
+Threats: raids on lit sites, weather, crew injury, and a rainy season
+that has to be survived rather than beaten.
+
+THE TUNING BENCH (Tuning.tsx)
+    One slider, one meter, one picture, one button. Drag until the meter
+    climbs, stop on the peak, lock it in.
+
+    The picture is drawn in units of reach rather than kilometres, which
+    is what makes one strip true for every neighbour whatever its mast
+    height. It is the only place in the game where the skip zone is a
+    hole you can watch a settlement fall into.
+
+
+THE PIECES THAT STAND ALONE
+===========================
+
+Two eras that are not playable have a working piece of their argument
+built anyway, reachable from the main menu.
+
+THE ROUTING WALK-THROUGH (Routing.tsx)              Era 6's argument
+    One message, one network, and every decision it takes on the way,
+    slowed down until it can be watched: the frame going on, the table
+    being read, the bits crossing the line, the frame coming off at the
+    far end.
+
+    The second thing it shows is the price. The same delivery is modelled
+    on every processor the workbench offers, and the cost of thinking is
+    measured from that machine's own adder rather than asserted. With a
+    chip out of the drawer, the line is the bottleneck and thinking is
+    free. With the machine the project can actually build, thinking costs
+    about as much as talking.
+
+THE PROCESSOR SIMULATOR (Simulator.tsx)             Era 7's argument
+    Three processors drive the same shift registers, one clock at a time:
+
+        MC14500B      a real 1-bit chip, Motorola, 1977
+        MOVE          what is left when you delete everything that
+                      needs a factory
+        Intel 8051    what was in the drawer before the drawer ran out
+
+    A button labelled "clock" advances the machine by one instruction. On
+    the 1-bit machines that is also one clock edge; on the 8051 an
+    instruction is 1 or 2 machine cycles, which is why the time on screen
+    comes from cycles and not from clicks.
+
+THE ERA RELAY CARD (EraRelay.tsx)
+    Every chapter opens with it. Serang wants to tell Bogor something.
+    Nine places, eight legs, one number at the end.
+
+    In 2030 that number is nine days. By the last era it is
+    milliseconds, and nothing about the geography changed — only what is
+    standing on it.
+
+    It is deliberately the same errand every time, because a comparison
+    where the task also changes proves nothing.
+
+
+THE GLOSSARY
 ============
 
-Isometric / 2.5D.
-
-The world should look like a miniature model of post-apocalyptic Indonesia.
-
-Buildings and infrastructure have visible height.
-
-Important infrastructure should physically stand above the map:
-
-    Radio tower
-         |
-         |
-       /---\
-      /     \
-     /       \
-
-Telegraph poles should form visible lines between settlements.
-
-Large communication towers should be recognizable from the regional map.
-
-The visual progression is important:
-
-    Ruins
-      ↓
-    Survivor camps
-      ↓
-    Settlements
-      ↓
-    Industrial towns
-      ↓
-    Connected cities
-      ↓
-    Technological civilization
-
-
-CORE GAME LOOP
-==============
-
-    EXPLORE
-       ↓
-    SCAVENGE
-       ↓
-    RECRUIT SPECIALISTS
-       ↓
-    RESEARCH / REDISCOVER TECHNOLOGY
-       ↓
-    MANUFACTURE COMPONENTS
-       ↓
-    BUILD INFRASTRUCTURE
-       ↓
-    CONNECT SETTLEMENTS
-       ↓
-    PROTECT THE NETWORK
-       ↓
-    HANDLE SOCIAL / POLITICAL CONFLICTS
-       ↓
-    EXPAND
-       ↓
-    UNLOCK NEXT TECHNOLOGICAL ERA
-       ↓
-    REPEAT
-
-
-THE CENTRAL GAMEPLAY IDEA
-=========================
-
-The network itself is the main strategic resource.
-
-Every communication link has:
-
-- Range
-- Bandwidth
-- Reliability
-- Power consumption
-- Construction cost
-- Maintenance cost
-- Latency
-- Security
-- Physical vulnerability
-
-The player must design a network rather than simply construct isolated
-buildings.
-
-Example:
-
-    Jakarta -------- Tangerang -------- Serang
-       |
-       |
-     Bogor
-       |
-     Bandung
-
-If Tangerang's relay station is destroyed:
-
-    Jakarta X Tangerang X Serang
-
-The network becomes fragmented.
-
-Later the player can build redundancy:
-
-    Jakarta -------- Tangerang -------- Serang
-       |                 |                |
-       |                 |                |
-       +------ Bogor ----+---- Bandung ---+
-
-The player gradually learns concepts such as:
-
-- Redundancy
-- Routing
-- Fault tolerance
-- Network topology
-- Bandwidth
-- Latency
-- Distributed systems
-
-without these necessarily being presented as abstract lessons.
-
-
-TECHNOLOGICAL PROGRESSION
-=========================
-
-ERA 0 — BEFORE TELECOMMUNICATIONS
----------------------------------
-
-Technology:
-- Messengers
-- Flags
-- Signal fires
-- Notice boards
-- Couriers
-
-Communication is extremely slow.
-
-The player's first objective is simply to establish reliable contact
-between nearby settlements.
-
-
-ERA 1 — AM RADIO
-----------------
-
-First major breakthrough:
-
-    AM RADIO
-
-Required:
-- Copper
-- Wire
-- Batteries
-- Generator
-- Antenna
-- Transmitter
-- Radio operators
-
-First major achievement:
-
-    NEW BATAVIA → TANGERANG
-
-The player establishes the first long-distance communication link.
-
-Problems:
-- Limited range
-- Interference
-- Power shortages
-- Damaged equipment
-- Need for trained radio operators
-
-
-ERA 2 — TELEGRAPH
------------------
-
-The player begins manufacturing and recovering:
-
-- Telegraph keys
-- Electromagnets
-- Insulated copper wire
-- Relay stations
-- Telegraph poles
-
-First physical communication network:
-
-    Jakarta
-       |
-    Tangerang
-       |
-    Serang
-
-Major gameplay shift:
-
-Communication infrastructure now physically occupies the map.
-
-Major conflict:
-
-    THE COPPER WAR
-
-Copper becomes extremely valuable.
-
-Bandits begin stealing:
-- Telegraph wire
-- Electrical components
-- Batteries
-- Transformers
-
-The player must protect infrastructure or develop alternatives.
-
-
-ERA 3 — TELEPHONE
------------------
-
-Technology:
-- Telephone
-- Switchboards
-- Relays
-- Exchanges
-- Better power systems
-
-Communication becomes interactive.
-
-Settlements can directly call each other.
-
-The network becomes more centralized and politically important.
-
-Major conflict:
-
-    WHO CONTROLS THE NETWORK?
-
-Settlements begin demanding ownership of communication infrastructure.
-
-The player must negotiate:
-- Access
-- Ownership
-- Maintenance responsibilities
-- Network standards
-- Political authority
-
-
-ERA 4 — ELECTRONICS
--------------------
-
-The old world's components are running out.
-
-The player must begin manufacturing components.
-
-Technologies:
-- Glassworking
-- Vacuum tubes
-- Transformers
-- Oscillators
-- Amplifiers
-- Logic circuits
-- Primitive electronic computers
-
-The player transitions from:
-
-    SCAVENGE TECHNOLOGY
-
-to:
-
-    MANUFACTURE TECHNOLOGY
-
-
-ERA 5 — COMPUTING
------------------
-
-The first primitive computers are constructed.
-
-They are enormous and inefficient.
-
-Technologies:
-- Binary logic
-- Memory
-- Digital circuits
-- CPUs
-- Storage
-- Modems
-- Digital communication
-
-The protagonist's programming background becomes increasingly important.
-
-The player can now automate network operations.
-
-
-ERA 6 — PACKET NETWORKS
------------------------
-
-The player realizes that manually maintaining dedicated connections
-between every city does not scale.
-
-Instead:
-
-    DATA → PACKETS → ROUTERS → DESTINATION
-
-Technologies:
-- Packet switching
-- Addressing
-- Routing
-- Error correction
-- Data segmentation
-- Network protocols
-
-Every router in the country runs on salvaged silicon.
-
-The dies themselves are fine.
-
-Chips survive burial. Ceramic and plastic packages keep working after
-decades in a drawer.
-
-What died around them:
-- Electrolytic capacitors
-- Batteries
-- Disks
-- Screens
-
-And the programs.
-
-Unpowered memory does not hold its contents. Boards come back intact
-and blank.
-
-The machines survived.
-
-The software did not.
-
-
-THE DRAWER RUNS OUT
--------------------
-
-This is the era salvage ends.
-
-Every recovery is smaller than the last.
-
-The network is now large enough that it consumes recovered parts
-faster than the crew can find them.
-
-Salvaged silicon is a thousand times better than anything the
-workshop can build, and there is a fixed amount of it left in the
-world.
-
-
-THE FAB
--------
-
-The project begins trying to manufacture its own semiconductors.
-
-It fails.
-
-It fails repeatedly, and each failure names something the
-civilization did not know it was missing:
-
-    Silicon purity
-    Crystal growth
-    Mask making
-    Dopant handling
-    Particulate control
-
-None of these are workshop problems.
-
-Each one needs a chemical industry.
-
-A chemical industry needs a supply chain.
-
-A supply chain needs coordination between regions that have never
-worked together.
-
-The fab is not a machine to be built.
-
-It is the final proof that the network works.
-
-Yield is the number the player watches:
-
-    0 dies in 400
-    1 die in 400
-    3 dies in 400
-
-Against it, salvage falls.
-
-The crossing point is the end of the game.
-
-
-ERA 7 — THE INTERNET
---------------------
-
-The final technological breakthrough is not a machine.
-
-It is a protocol.
-
-Different networks can communicate with each other.
-
-The player develops a TCP/IP-like architecture:
-
-    NETWORK A
-        |
-        |
-    [ROUTER]
-        |
-    [INTERNET]
-        |
-    [ROUTER]
-        |
-    NETWORK B
-
-The fab succeeds here, and not before.
-
-Its first product is a one-bit machine.
-
-Anything pulled out of a dead appliance would embarrass it.
-
-It is the one that matters, because tomorrow they can make another.
-
-
-WHAT THE FAB IS FOR
--------------------
-
-It is not speed.
-
-Internetworking needs routers at every network boundary, owned by
-people the player does not control.
-
-Fifteen provinces cannot be supplied out of a drawer.
-
-A network running on rationed scrap belongs to whoever holds the
-rations.
-
-A network that can be sold chips is a peer.
-
-The fab is how the project stops being necessary.
-
-It is also the answer to the question Era 3 asked:
-
-    "Who owns communication?"
-
-    "Not us. Not any more."
-
-
-THE FINAL ACT IS DISTRIBUTION
------------------------------
-
-The player spends it handing gateways to networks they will never
-administer, and watching autonomy spread outward from New Batavia.
-
-Scale then forces the protocol.
-
-Once there are enough routers in enough hands, nobody can maintain the
-route tables by hand, and the network has to be allowed to decide for
-itself.
-
-The final objective:
-
-    Send a message from New Batavia to Surabaya
-    without manually specifying the route.
-
-It travels through a gateway New Batavia manufactured, sitting in a
-network New Batavia does not own, along a path nobody chose.
-
-The protagonist tries to reconstruct the route.
-
-He cannot.
-
-That is the win condition.
-
-In Era 1 he keyed the first message himself.
-
-He was the sender, he knew the path, he was the path.
-
-SUCCESS:
-
-    THE FIRST INTERNET
+42 technology terms, spread across the nine eras:
+
+    Era 0: 5    Era 1: 6    Era 2: 5    Era 3: 5    Era 4: 5
+    Era 5: 2    Era 6: 4    Era 7: 5    Era 8: 5
+
+Each term has: what it is, why it mattered, a real historical citation
+with names and dates, and for most of them a numbered diagram whose pins
+are captioned step by step.
+
+Terms light up wherever they are said — in the story, in Era 0, in Era 1
+— and clicking one opens the panel over whatever screen the player is
+on. Indonesian text lights the same terms through its own aliases, so a
+term that highlights in one language highlights in the other.
+
+
+THE SCRIPT
+==========
+
+Nine chapters. Each has a premise, an objective, an opening scene and a
+closing scene. The whole thing is readable from the main menu without
+playing anything.
+
+16 optional skits sit alongside it: 7 in Era 0, 9 in Era 1. A skit
+becomes available when the run reaches the state it belongs to, a chip
+appears in the top bar, and it waits there until the player asks for it.
+Viewing one retires it for that run. None of them ends in an
+instruction, because the day loop is the instruction.
+
+LANGUAGES
+---------
+English and Indonesian, switchable at any time, remembered across
+reloads.
+
+The English files own the structure — which era, who speaks, where the
+scenes break — and the Indonesian files supply text at matching indices.
+A translation can therefore never drift out of step with the scene it
+belongs to; the worst that can happen is a missing line, which falls
+back to English.
+
+The two languages are not the same register:
+
+- The narrator speaks written Indonesian.
+- The four founders speak Jakarta slang to each other — gua, lu, and no
+  ceremony, elder or not. Distance shows up as clipped names, not as
+  pronouns.
+- Everyone who joined later says saya and addresses the founders by
+  title. Neither slang nor literary: ordinary polite speech.
+- Numbers of 2 and above are written as digits in both languages,
+  because people say "3 hari", not "tiga hari".
+
+Indonesian is not a word-for-word translation and cannot be. A contrast
+has to name its second term; abstract noun predicates become verbs;
+sentence-final particles carry stance; transitive verbs keep objects
+English drops. The full rule set is documented at the top of
+src/skits.id.ts.
+
+
+VERIFICATION
+============
+
+Six headless checks, because most of what can go wrong here is not
+visible in a browser:
+
+    npm run check:script    Both scripts line up, nobody spells a number,
+                            every glossary term is said somewhere, every
+                            diagram pin has words, and nobody speaks out
+                            of register.
+    npm run check:relay     The relay time falls every era.
+    npm run check:onebit    Every adder over every input pair, on every
+                            simulated processor.
+    npm run check:routing   The routing model, with no React in the way.
+    npm run check:routes    The road network.
+    npm run balance:survey  Era 0's economy.
 
 
 LORE
@@ -582,773 +421,321 @@ LORE
 THE FALL
 --------
 
-The war began in 2027.
+The war began in 2027. It did not end civilization; it started the
+cascade.
 
-It did not end civilization.
+It took the things hardest to replace and easiest to reach: satellites,
+data centres, undersea cables, refineries, ports. Everything after that
+failed on its own.
 
-It only started the cascade.
+Power grids failed because nobody could deliver fuel. Supply chains
+collapsed because nobody could route them. Telecommunications stopped
+because the switching was gone and the people who understood it had
+scattered. Governments lost the ability to coordinate, which meant they
+lost the ability to govern.
 
-The war took the things that were hardest to replace and easiest to
-reach:
+The fighting was over in 18 months. Fewer than 200,000 died in it, which
+for a war is a small number. The collapse took another 6 years, and
+almost nobody noticed it happening, because it happened one unreplaced
+part at a time.
 
-- Satellites
-- Data centres
-- Undersea cables
-- Refineries
-- Ports
+A truck ran out of fuel, so the rice never arrived, so a city went
+hungry. The same city had no water, because a power station 400
+kilometres away needed one small part, and the factory that made that
+part was gone.
 
-Everything after that failed on its own.
+Jakarta survived as an isolated collection of settlements. The survivors
+began calling it NEW BATAVIA.
 
-Power grids failed because nobody could deliver fuel.
+THE ARGUMENT
+------------
 
-Supply chains collapsed because nobody could route them.
-
-Telecommunications stopped because the switching was gone and the
-people who understood it had scattered.
-
-Governments lost the ability to coordinate, which meant they lost the
-ability to govern.
-
-Cities became isolated.
-
-Modern civilization slowly fragmented.
-
-The fighting was over in eighteen months.
-
-The collapse took another six years, and almost nobody noticed it
-happening, because it happened one unreplaced part at a time.
-
-Jakarta survived, but became an isolated collection of settlements.
-
-The survivors eventually began calling it:
-
-    NEW BATAVIA
-
-
-THE PROTAGONIST
-===============
-
-A telecommunications graduate who became a programmer.
-
-During university they studied:
-- Telecommunications
-- Networking
-- Digital communications
-- Electronics
-- Signal processing
-
-After graduation they became a programmer instead.
-
-Their knowledge is broad but incomplete.
-
-They know what a modern network looks like.
-
-They understand:
-- Protocols
-- Networking
-- Servers
-- Data
-- Software
-
-But they cannot personally:
-- Manufacture vacuum tubes
-- Build generators
-- Smelt copper
-- Make glass
-- Design industrial machinery
-
-This forces them to find other people.
-
-
-THE RECONNECT PROJECT
-=====================
-
-The protagonist proposes an absurd idea:
-
-    REBUILD THE INTERNET.
-
-Most survivors think this is pointless.
-
-Food is scarce.
-
-Electricity is scarce.
-
-Bandits control roads.
-
-Why waste resources on communication?
-
-The protagonist argues:
+Most survivors think rebuilding communication is pointless. Food is
+scarce. Bandits control roads. Why spend anything on talking?
 
     "If we can communicate, we can coordinate."
-
     "If we can coordinate, we can trade."
-
     "If we can trade, we can specialize."
-
     "If we can specialize, we can rebuild."
 
-The project begins with a single radio.
+Era 0 puts the counter-argument in Mel's mouth and does not resolve it:
+people are hungry today, not in 8 seconds. The reply is that Depok has
+rice and no salt, New Batavia has salt and no rice, and neither knows
+about the other — so it is not a talking problem that becomes a food
+problem later. It is one problem, and it is the food one.
+
+The 8 seconds is the spine of the whole script. It is how long a phone
+call took to connect before the war. It comes back in Era 0's skits, in
+Era 1's, and in the relay card that times the same errand nine times.
 
 
-THE HARSH MENTOR
-================
+CHARACTERS
+==========
 
-A Dr. Xeno-like character.
+THE FOUNDERS — playable, present for the whole game
+---------------------------------------------------
 
-Former telecommunications engineer / researcher.
+BAYU — Architect
+    Telecommunications graduate who became a programmer. Holds the whole
+    topology in his head. Surveys the ground, then builds on it.
+    Joins: Era 0. Without him nothing starts.
 
-He is not an antagonist.
+MEL — Quartermaster
+    Container driver out of Tanjung Priok, 6 years. Moves copper, cells
+    and crews between sites. Knows which roads are open and which are
+    watched.
+    Joins: Era 0. Without her nothing moves.
 
-He is a harsh mentor.
+TAJUDDIN — Warden
+    Guards the lines and the yards. Stands between the copper and the
+    raiders.
+    Joins: Era 0 in the build, where he walks the survey with Bayu and
+    Mel. Without him the copper walks off.
 
-He possesses deep knowledge of:
-- RF engineering
-- Antennas
-- Transmission systems
-- Electronics
-- Power systems
-- Industrial telecommunications
-- Network reliability
+PAK MIN — Wireman
+    31 years at the Gambir exchange. Builds and tunes the transmitters;
+    if it carries a signal, he soldered it. The harsh mentor.
+    Joins: Era 1. Without him no transmitter works twice.
+    Dies: Era 5, of being old, in a workshop that works.
 
-His philosophy:
+The founders are the emotional through-line and they are what the skits
+are made of. What changes is what they are: labour in the metro eras,
+programs at island scale, chairs and founders at archipelago scale. By
+Era 8 the four of them command nothing directly. That is the arc, not a
+limitation.
+
+THE REST — script only, not playable
+------------------------------------
+
+These eight speak in chapters 2 through 8. They are not party members,
+because there is no era loop to recruit them into yet.
+
+IWAN — Machinist
+    Motorcycle mechanic. Engines, generators, pole hardware,
+    improvisation. Era 2.
+
+SARI — Lineman
+    Climbs, strings, splices. Era 2.
+
+AYU — Switchman
+    The first operator Bayu ever trained. Runs the exchanges and trains
+    the people who run the rest. Era 3.
+
+IBU RATNA — Envoy
+    Speaks for the settlements the network now runs through. Era 3.
+
+HENDRA — Glassblower
+    Era 4. Without him there are no vacuum tubes, ever.
+
+DEWI — Chemist
+    Batteries, acids, solvents, and much later dopants. Era 4.
+
+FAJAR — Coder
+    Born after the fall. The first person on the project who never saw
+    the thing they are rebuilding. Everyone else is working from memory;
+    he is working from description. That makes him the only one who can
+    design without nostalgia, and the only one who cannot be argued with
+    using "that is not how it used to work". Era 5.
+
+ANISA — Mathematician
+    Error correction, addressing, routing. Era 6.
+
+ERA 8 RECRUITS NOBODY
+    The last people Bayu meets are not recruits. They are counterparts:
+    network founders in Surabaya, Medan, Makassar, running networks he
+    does not administer and cannot order. The roster stops growing
+    because the work has stopped being his.
+
+
+THE MENTOR
+==========
+
+Pak Min is not an antagonist. His philosophy:
 
     "A machine that works for five minutes isn't working."
 
-He constantly challenges the protagonist.
+    BAYU:    "The transmitter works."
+    PAK MIN: "Today."
 
-PROTAGONIST:
-    "The transmitter works."
+He forces the question of reliability, redundancy, maintenance and
+scale. Bayu believes civilization must be rebuilt quickly; Pak Min
+believes it must be rebuilt correctly. Their philosophies converge.
 
-MENTOR:
-    "Today."
-
-PROTAGONIST:
-    "What's wrong with it?"
-
-MENTOR:
-    "What happens when the generator fails?"
-
-The mentor forces the player to think about:
-- Reliability
-- Redundancy
-- Maintenance
-- Safety
-- Scalability
-
-He believes civilization must be rebuilt correctly.
-
-The protagonist believes civilization must be rebuilt quickly.
-
-Their philosophies gradually converge.
-
-
-MENTOR CHARACTER ARC
-====================
-
-Early:
-
-    Engineering > People
-
-He believes people are unreliable.
-
-Middle:
-
-    Technology exists because of people.
-
-He begins teaching rather than simply criticizing.
-
-Late:
-
-    Engineering + People
-
-He accepts that civilization cannot be optimized like a machine.
-
-His final philosophy becomes:
+His arc: engineering over people, then technology exists because of
+people, then both. Ending at:
 
     "Build it so everyone can use it.
      Then build it so it survives them."
 
-
-CHARACTER RECRUITMENT
-=====================
-
-Characters are not merely bonuses.
-
-Each person represents a lost piece of civilization.
-
-Examples:
-
-
-RADIO OPERATOR
---------------
-
-Former amateur-radio enthusiast.
-
-Knows:
-- Radio operation
-- Antennas
-- Signal propagation
-- Radio maintenance
-
-First major communications specialist.
-
-
-MECHANIC
---------
-
-Former motorcycle mechanic.
-
-Knows:
-- Engines
-- Generators
-- Mechanical repair
-- Improvisation
-
-Becomes responsible for power infrastructure.
-
-
-GLASSBLOWER
------------
-
-Survivor with glassmaking knowledge.
-
-Eventually becomes essential for vacuum tube manufacturing.
-
-
-CHEMIST
--------
-
-Helps recreate:
-- Batteries
-- Chemicals
-- Materials
-- Electronics manufacturing processes
-
-
-FARMER
-------
-
-Initially thinks the entire communications project is ridiculous.
-
-    "People can't eat packets."
-
-Eventually realizes communication improves:
-- Trade
-- Weather information
-- Agricultural coordination
-- Distribution
-
-Becomes one of the most important members of the civilization.
-
-
-SCOUT / COURIER
----------------
-
-Former delivery driver.
-
-Knows:
-- Jakarta
-- Roads
-- Bridges
-- Local geography
-
-Becomes critical for exploration and infrastructure construction.
-
-
-MATHEMATICIAN
--------------
-
-Helps develop:
-- Error correction
-- Encryption
-- Algorithms
-- Routing
-
-
-PROGRAMMER
-----------
-
-Works alongside the protagonist.
-
-Helps transform the rebuilt computers into useful systems.
-
-
-POLITICAL LEADER
-----------------
-
-Represents settlements that are increasingly dependent on the network.
-
-Creates political conflicts around:
-- Ownership
-- Access
-- Privacy
-- Control
-- Sovereignty
-
-
-CHARACTER ROSTER
-================
-
-The archetypes above, named and dated.
-
-Nobody on this list is a stat bonus.
-
-Each one gates a specific technology, and the era does not open until
-that person exists.
-
-
-THE FOUNDERS
-------------
-
-BAYU — Architect
-    Telecommunications graduate who became a programmer.
-    The protagonist.
-    Joins: Era 0. Without him nothing starts.
-
-MEL — Quartermaster
-    Container driver out of Tanjung Priok, six years.
-    Knows which roads are open and which are watched.
-    Joins: Era 0. Without her nothing moves.
-
-PAK MIN — Wireman
-    Thirty-one years at the Gambir exchange.
-    The harsh mentor.
-    Joins: Era 1. Without him no transmitter works twice.
-    Dies: Era 5, of being old, in a workshop that works.
-
-TAJUDDIN — Warden
-    Stands between the copper and the people who want it.
-    Joins: Era 1. Without him the copper walks off.
-
-The founders persist for the whole game.
-
-They are the emotional through-line, and they are what the skits are
-made of.
-
-What changes is what they are: labour in the metro eras, programs at
-island scale, chairs and founders at archipelago scale.
-
-By Era 7 the four of them command nothing directly.
-
-That is the arc, not a limitation.
-
-
-THE BUILDERS
-------------
-
-IWAN — Machinist
-    Motorcycle mechanic.
-    Engines, generators, pole hardware, improvisation.
-    Joins: Era 2. Without him there is no power and nothing to bolt to.
-
-SARI — Lineman
-    Climbs, strings, splices.
-    Joins: Era 2. Without her a hundred kilometres of wire never leaves
-    the drum.
-
-
-THE INSTITUTION
----------------
-
-AYU — Switchman
-    The first operator Bayu ever trained.
-    Runs the exchanges and trains the people who run the rest.
-    Joins: Era 3. Without her the switchboards have nobody at them.
-
-IBU RATNA — Envoy
-    Speaks for the settlements the network now runs through.
-    Joins: Era 3. Without her Bandung takes its exchange back.
-
-
-THE MANUFACTURERS
------------------
-
-HENDRA — Glassblower
-    Joins: Era 4. Without him there are no vacuum tubes, ever.
-
-DEWI — Chemist
-    Batteries, acids, solvents — and, much later, dopants.
-    Joins: Era 4. Without her the fab is not even a possibility.
-
-
-THE SUCCESSORS
---------------
-
-FAJAR — Coder
-    Born after the fall.
-
-    The first person on the project who never saw the thing they are
-    rebuilding.
-
-    Everyone else is working from memory. He is working from
-    description.
-
-    This makes him the only one who can design without nostalgia, and
-    the only one who cannot be argued with using "that is not how it
-    used to work".
-
-    Joins: Era 5. Without him Bayu stays the only programmer alive.
-
-ANISA — Mathematician
-    Error correction, addressing, routing.
-    Joins: Era 6. Without her packets have nowhere to go.
-
-
 PAK MIN DIES IN ERA 5
 ---------------------
 
-Not to a raid. Not to a fall from a mast.
+Not to a raid. Not to a fall from a mast. He is old, the project has run
+for 18 years, and one morning he does not come to the bench.
 
-He is old, and the project has run for twenty years, and one morning
-he does not come to the bench.
+What matters is what he knew when he died. He knew, in detail, how a
+semiconductor is made. He could describe the furnace, the crystal, every
+page of the process, read decades before the war. He never saw one made.
 
-What matters is what he knew when he died.
-
-He knew, in detail, how a semiconductor is made.
-
-He could describe the furnace. He could describe the crystal. He had
-read every page of it, decades before the war, and he could recite the
-process to anyone who asked.
-
-He never saw one made.
-
-Not because the knowledge was lost — it was in his hands the entire
-time — but because knowing how a thing is done and being able to do it
-are separated by a chemical industry, a supply chain, and a generation
-of people who have to be trained by someone.
+Not because the knowledge was lost — it was in his hands the whole time
+— but because knowing how a thing is done and being able to do it are
+separated by a chemical industry, a supply chain, and a generation of
+people who have to be trained by someone.
 
     Knowledge survives a collapse easily.
-
     Capability does not.
-
     Rebuilding capability is the work, and the work takes a lifetime.
 
-This is the correction to the fantasy the genre usually sells.
+This is the correction to the fantasy the genre usually sells. Nobody
+reads a book and produces a transistor.
 
-The protagonist does not read a book and produce a transistor.
-
-Nobody does.
-
-The project takes forty years because forty years is what it takes,
-and the man who understood it best is not alive at the end of them.
-
-His last instruction to Fajar is not a technique.
+His last instruction to Fajar is not a technique:
 
     "Write it down properly. With the date."
 
-That is the same thing he said in Era 1, about a circuit that answered
+That is the same thing he says in Era 1, about a link that answered
 twice.
 
-The founders' philosophy, complete:
 
-    People die.
+THE FAB
+=======
 
-    Ideas do not.
+The project tries to manufacture its own semiconductors. It fails, and
+each failure names something the civilization did not know it was
+missing: silicon purity, crystal growth, mask making, dopant handling,
+particulate control.
 
-    But an idea nobody can act on is just a rumour with footnotes,
-    and closing that gap is the only thing any of this has ever been.
+None of these are workshop problems. Each one needs a chemical industry.
+A chemical industry needs a supply chain. A supply chain needs
+coordination between regions that have never worked together.
 
+The fab is not a machine to be built. It is the final proof that the
+network works.
 
-ERA 7 RECRUITS NOBODY
----------------------
+Yield is the number the player watches:
 
-The last people the player meets are not recruits.
+    0 dies in 400
+    1 die in 400
+    3 dies in 400
 
-They are counterparts: network founders in Surabaya, Medan, Makassar,
-running networks the player does not administer and cannot order.
+Against it, salvage falls. The crossing point is the end of the game.
 
-That is the point.
+WHAT THE FAB IS FOR
+-------------------
 
-The ending is the project becoming unnecessary, and the roster stops
-growing because the work has stopped being theirs.
+Not speed. Its first product is a 1-bit machine that anything pulled out
+of a dead appliance would embarrass.
 
+Internetworking needs routers at every network boundary, owned by people
+the project does not control. Fifteen provinces cannot be supplied out
+of a drawer. A network running on rationed scrap belongs to whoever
+holds the rations. A network that can be sold chips is a peer.
 
-ERA-SPECIFIC CONFLICTS
-======================
-
-ERA 0 — AM RADIO
-----------------
-Main threat:
-    BANDITS
-
-Motivation:
-    Scrap, food, information
-
-Conflict:
-    Radio towers are attacked and generators stolen.
-
-
-ERA 1 — TELEGRAPH
------------------
-Main threat:
-    COPPER THEFT
-
-Motivation:
-    Copper becomes the new currency of industry.
-
-Conflict:
-    Telegraph lines are dismantled for scrap.
-
-New problem:
-    Infrastructure security.
-
-
-ERA 2 — TELEPHONE
------------------
-Main threat:
-    POLITICAL CONTROL
-
-Settlements begin demanding ownership of the network.
-
-Question:
+The fab is how the project stops being necessary. It is also the answer
+to the question Era 3 asked:
 
     "Who owns communication?"
+    "Not us. Not any more."
 
 
-ERA 3 — ELECTRONICS
--------------------
-Main threat:
-    RESOURCE SCARCITY
+DESIGNED, NOT BUILT
+===================
 
-Old components are disappearing.
-
-The civilization must manufacture its own technology.
-
-
-ERA 4 — COMPUTING
------------------
-Main threat:
-    KNOWLEDGE MONOPOLIES
-
-Certain settlements begin controlling computing knowledge.
-
-The player must decide whether knowledge should be:
-- Open
-- Restricted
-- Commercialized
-- Government controlled
-
-
-ERA 5 — NETWORKING
-------------------
-Main threat:
-    NETWORK WARS
-
-Different factions create incompatible networks.
-
-The player must convince them to adopt common standards.
-
-
-ERA 6 — INTERNET
-----------------
-Main threat:
-    POLITICAL FRAGMENTATION
-
-The technology works.
-
-The difficult question becomes:
-
-    Who controls the Internet?
-
+Everything below this line exists in this document and nowhere else.
 
 FACTIONS
-========
+--------
 
 THE RECONNECT MOVEMENT
-----------------------
-
-Goal:
-    Build an open, resilient communication network.
-
-Philosophy:
-    Communication is a basic infrastructure of civilization.
-
+    Build an open, resilient communication network. Communication is
+    basic infrastructure.
 
 THE SCRAP RAIDERS
------------------
-
-Goal:
-    Immediate survival.
-
-Philosophy:
-
-    "Tomorrow doesn't matter if we don't survive today."
-
-They dismantle infrastructure for resources.
-
+    Immediate survival. "Tomorrow doesn't matter if we don't survive
+    today." They dismantle infrastructure for resources.
 
 THE INDUSTRIAL LEAGUE
----------------------
-
-A collection of powerful settlements and factories.
-
-They believe infrastructure should belong to whoever builds it.
-
-They want to charge settlements for network access.
-
+    Powerful settlements and factories. Infrastructure belongs to
+    whoever builds it, and settlements should pay for access.
 
 THE CENTRAL AUTHORITY
----------------------
-
-A growing political government.
-
-They believe a unified country requires a unified communication system.
-
-They want centralized control of the network.
-
+    A growing government. A unified country requires a unified
+    communication system, centrally controlled.
 
 THE FREE NETWORK MOVEMENT
--------------------------
+    Communication should be open to everyone. Allies of the project, and
+    a problem, for the same reason.
 
-A later faction.
+Note: Era 2's raiders and Era 3's Ibu Ratna are the only places any of
+this reaches the script, and neither is written as a faction.
 
-They believe communication should be open to everyone.
+THE ARCHIPELAGO
+---------------
 
-They become allies of the protagonist but may also create problems by
-allowing uncontrolled access.
+The build stops at the Jakarta region. Expansion to Bandung, Cirebon,
+Yogyakarta, Semarang, Surabaya, then Sumatra, Bali, Kalimantan and
+Sulawesi is described in the script and drawn nowhere.
+
+The visual progression this implies:
+
+    Ruins -> survivor camps -> settlements -> industrial towns ->
+    connected cities -> technological civilization
+
+NETWORK PROPERTIES
+------------------
+
+The pitch specified that every link would carry range, bandwidth,
+reliability, power consumption, construction cost, maintenance cost,
+latency, security and physical vulnerability.
+
+The build models range, reliability, power, construction cost and
+physical vulnerability. Bandwidth, latency and security are argued in
+the script and in the routing walk-through rather than simulated.
 
 
-GAME THEMES
-===========
-
-The game explores:
+THEMES
+======
 
     Technology vs survival
-
     Centralization vs decentralization
-
     Knowledge vs control
-
     Short-term survival vs long-term civilization
-
     Infrastructure vs politics
-
     Efficiency vs resilience
-
     Individual expertise vs collective knowledge
-
     Knowing how vs being able to
 
-
-THE DR. STONE FEELING
-=====================
-
-The player should constantly experience:
+The last one is the spine. The player should constantly experience:
 
     "We need X."
-
     "Where do we get X?"
-
-    "Nobody knows how to make X anymore."
-
+    "Nobody knows how to make X any more."
     "Find someone who knows."
 
-Then:
-
-    EXPLORE
-       ↓
-    FIND PERSON
-       ↓
-    LEARN KNOWLEDGE
-       ↓
-    GATHER MATERIALS
-       ↓
-    RECREATE TECHNOLOGY
-       ↓
-    SOLVE NEW PROBLEM
-
-The protagonist isn't a godlike genius who knows everything.
-
-They are the person who understands:
-
-    "We need to figure this out."
-
-The real civilization is rebuilt by hundreds of specialists.
-
-
-ULTIMATE PROGRESSION
-====================
-
-    SURVIVAL
-       ↓
-    COMMUNICATION
-       ↓
-    RADIO
-       ↓
-    TELEGRAPH
-       ↓
-    TELEPHONE
-       ↓
-    ELECTRONICS
-       ↓
-    COMPUTERS
-       ↓
-    DIGITAL NETWORKS
-       ↓
-    PACKET SWITCHING
-       ↓
-    ROUTING
-       ↓
-    INTERNET
-
-The map evolves alongside technology:
-
-    ISOLATED SETTLEMENTS
-             ↓
-    LOCAL COMMUNICATION
-             ↓
-    CONNECTED CITIES
-             ↓
-    REGIONAL NETWORK
-             ↓
-    NATIONAL NETWORK
-             ↓
-    INTERCONNECTED NETWORKS
-             ↓
-          INTERNET
+Bayu is not a genius who knows everything. He is the person who
+understands that this has to be figured out. The civilization is rebuilt
+by hundreds of specialists.
 
 
 FINAL SCENE
 ===========
 
-New Batavia.
+New Batavia. The final packet is sent.
 
-The player has connected Jakarta, Bandung, Semarang, Yogyakarta,
-Surabaya, and eventually settlements across the Indonesian archipelago.
+    Destination: SURABAYA
+    Source:      NEW BATAVIA
 
-The final packet is sent.
-
-Destination:
-
-    SURABAYA
-
-Source:
-
-    NEW BATAVIA
-
-The player doesn't choose the route.
-
-The network does.
-
-The packet travels through several independent networks.
-
-Then:
+The route is not chosen. The network chooses it. The packet travels
+through several independent networks.
 
     MESSAGE RECEIVED
 
-The entire team watches the terminal.
+The team watches. Silence.
 
-Silence.
+    BAYU:    "It's back."
+    PAK MIN: "No."
 
-The protagonist says:
-
-    "It's back."
-
-The harsh mentor looks at the network map.
-
-    "No."
-
-The protagonist looks confused.
+Bayu looks confused.
 
     "We didn't bring it back."
 
@@ -1356,13 +743,11 @@ He smiles.
 
     "We built a new one."
 
-CUT TO:
-
-A map of Indonesia.
-
-Thousands of communication nodes illuminate across the islands.
-
-TITLE:
+CUT TO: a map of Indonesia. Thousands of nodes illuminate across the
+islands.
 
     NEW BATAVIA
-    RECONNECT
+
+Note: Pak Min dies in Era 5 and this scene is Era 8. The line is his,
+said by someone else, or the scene is a memory. This is unresolved in
+the script and needs a decision.

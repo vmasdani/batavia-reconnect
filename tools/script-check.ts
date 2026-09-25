@@ -12,19 +12,33 @@
  *      language and not the other silently mistranslates every line after it.
  *   2. Is anybody speaking a number instead of saying it? People say "2 hari".
  *   3. Does every glossary term still occur in the script it was written for?
- *   4. Is anybody speaking out of register — a founder in written Indonesian, or
+ *   4. Does every diagram's pin have words for it, in both languages?
+ *   5. Is anybody speaking out of register — a founder in written Indonesian, or
  *      somebody who joined later in slang they would not use with a founder?
+ *   6. Is the exchange at the gate saying the same things in both languages?
+ *
+ * What it cannot see is everything in `language.txt`: whether a contrast names
+ * its second term, whether a pivot was signalled, whether an English image
+ * survived the crossing. Those are found by reading, and that file says how.
  *
  *   npm run check:script
  */
 
 import { CHAPTERS } from '../src/story'
 import { ID_CHAPTERS } from '../src/story.id'
-import { SKITS } from '../src/skits'
+import { SKITS, type Scene, type SkitText } from '../src/skits'
+import { ID_SKITS } from '../src/skits.id'
 import { SURVEY_SKITS } from '../src/era0-skits'
 import { ID_SURVEY_SKITS } from '../src/era0-skits.id'
+import { ERA2_SKITS } from '../src/era2-skits'
+import { ID_ERA2_SKITS } from '../src/era2-skits.id'
 import { TERMS, findTerms } from '../src/glossary'
+import { figureFor } from '../src/figures'
 import { ID_TERMS } from '../src/glossary.id'
+import { EN_PARLEY, type ParleyText } from '../src/parley'
+import { ID_PARLEY } from '../src/parley.id'
+import { BRIEFINGS } from '../src/briefings'
+import { ID_BRIEFINGS } from '../src/briefings.id'
 
 /**
  * The four founders. They walked the region together in 2030 and never stopped
@@ -141,49 +155,123 @@ for (let c = 0; c < CHAPTERS.length; c++) {
   }
 }
 
-// Era 0's skits are the other translated script, and they are held to the same
-// two rules. Era 1's are English only, so there is nothing here to compare.
-console.log('\nera 0 skits')
-for (const skit of SURVEY_SKITS) {
-  const text = ID_SURVEY_SKITS[skit.id]
+// Both eras' skits are translated scripts of the same shape, so they are held
+// to the same rules by the same walk. The only difference is which list and
+// which translation go in.
+const checkSkits = (label: string, skits: Scene[], text: Record<string, SkitText>) => {
+  console.log(`\n${label}`)
+  for (const skit of skits) {
+    const said = text[skit.id]
+    if (!said) {
+      flag(skit.id, 'no Indonesian text at all', '')
+      continue
+    }
+    if (said.lines.length !== skit.lines.length) {
+      flag(skit.id, `line counts differ: EN ${skit.lines.length}, ID ${said.lines.length}`, '')
+      continue
+    }
+    skit.lines.forEach((line, i) => {
+      const at = `${skit.id}[${i}] ${line.who}`
+      for (const [tag, spoken, pattern] of [
+        ['EN', line.text, SPOKEN_NUMBER_EN],
+        ['ID', said.lines[i], SPOKEN_NUMBER_ID],
+      ] as const) {
+        const found = spoken.replace(NOT_AN_AMOUNT, ' ').match(pattern)
+        if (found) flag(at, `${tag} spells a number: ${[...new Set(found)].join(', ')}`, spoken)
+      }
+      if (CASUAL.has(line.who)) {
+        const found = said.lines[i].replace(NOT_A_POSSESSIVE, ' ').match(TOO_WRITTEN)
+        if (found) flag(at, `too written for ${line.who}: ${[...new Set(found)].join(', ')}`, said.lines[i])
+      } else if (PLAIN.has(line.who)) {
+        const found = [
+          ...(said.lines[i].match(TOO_LOOSE) ?? []),
+          ...(said.lines[i].replace(NOT_A_POSSESSIVE, ' ').match(TOO_WRITTEN) ?? []),
+        ]
+        if (found.length) flag(at, `out of register for ${line.who}: ${[...new Set(found)].join(', ')}`, said.lines[i])
+      }
+    })
+  }
+}
+
+checkSkits('era 0 skits', SURVEY_SKITS, ID_SURVEY_SKITS)
+checkSkits('era 1 skits', SKITS, ID_SKITS)
+checkSkits('era 2 skits', ERA2_SKITS, ID_ERA2_SKITS)
+
+// The primers and briefings are read like everything else, so the digits rule
+// covers them too, and each one has to have Indonesian text of the same shape.
+console.log('\nbriefings')
+for (const briefing of BRIEFINGS) {
+  const text = ID_BRIEFINGS[briefing.era]
   if (!text) {
-    flag(skit.id, 'no Indonesian text at all', '')
+    flag(`era ${briefing.era}`, 'no Indonesian briefing at all', '')
     continue
   }
-  if (text.lines.length !== skit.lines.length) {
-    flag(skit.id, `line counts differ: EN ${skit.lines.length}, ID ${text.lines.length}`, '')
-    continue
+  if (text.primer.things.length !== briefing.primer.things.length) {
+    flag(
+      `era ${briefing.era} primer`,
+      `thing counts differ: EN ${briefing.primer.things.length}, ID ${text.primer.things.length}`,
+      '',
+    )
   }
-  skit.lines.forEach((line, i) => {
-    const at = `${skit.id}[${i}] ${line.who}`
-    for (const [label, said, pattern] of [
-      ['EN', line.text, SPOKEN_NUMBER_EN],
-      ['ID', text.lines[i], SPOKEN_NUMBER_ID],
-    ] as const) {
-      const found = said.replace(NOT_AN_AMOUNT, ' ').match(pattern)
-      if (found) flag(at, `${label} spells a number: ${[...new Set(found)].join(', ')}`, said)
-    }
-    if (CASUAL.has(line.who)) {
-      const found = text.lines[i].replace(NOT_A_POSSESSIVE, ' ').match(TOO_WRITTEN)
-      if (found) flag(at, `too written for ${line.who}: ${[...new Set(found)].join(', ')}`, text.lines[i])
-    }
-  })
+  // Only the eras that are played carry a how-to-play list, and the English
+  // file decides which those are.
+  if ((text.how?.length ?? 0) !== (briefing.how?.length ?? 0)) {
+    flag(
+      `era ${briefing.era}`,
+      `point counts differ: EN ${briefing.how?.length ?? 0}, ID ${text.how?.length ?? 0}`,
+      '',
+    )
+  }
+  const prose = (b: typeof briefing | typeof text) =>
+    [
+      b.primer.problem,
+      ...b.primer.things.flatMap((t) => [t.name, t.plain, t.catch ?? '']),
+      b.primer.upshot,
+      b.objective,
+      b.win,
+      b.pressure,
+      ...(b.how ?? []).flatMap((h) => [h.what, h.note]),
+    ].join(' ')
+  for (const [label, line, pattern] of [
+    ['EN', prose(briefing), SPOKEN_NUMBER_EN],
+    ['ID', prose(text), SPOKEN_NUMBER_ID],
+  ] as const) {
+    const found = line.replace(NOT_AN_AMOUNT, ' ').match(pattern)
+    if (found) flag(`era ${briefing.era}`, `${label} spells a number: ${[...new Set(found)].join(', ')}`, '')
+  }
+}
+
+// Era 0's parley is read like dialogue, so the digits rule covers it. The keys
+// cannot drift — `ParleyText` is one interface and TypeScript holds both packs
+// to it — so what is left to check is the prose, and that nothing came through
+// a translation still in English.
+console.log('\nparley')
+const parleyProse = (pack: ParleyText) => [
+  pack.lead,
+  ...Object.values(pack.wants),
+  ...Object.values(pack.cards).flatMap((c) => [c.label, c.note]),
+  ...Object.values(pack.replies).flatMap((r) => Object.values(r)),
+  ...Object.values(pack.verdict),
+  pack.handOver, pack.handOverNote, pack.done, pack.autoNote,
+]
+for (const [label, lines, pattern] of [
+  ['EN', parleyProse(EN_PARLEY), SPOKEN_NUMBER_EN],
+  ['ID', parleyProse(ID_PARLEY), SPOKEN_NUMBER_ID],
+] as const) {
+  for (const line of lines) {
+    const found = line.replace(NOT_AN_AMOUNT, ' ').match(pattern)
+    if (found) flag('parley', `${label} spells a number: ${[...new Set(found)].join(', ')}`, line)
+  }
+}
+const enParley = new Set(parleyProse(EN_PARLEY))
+for (const line of parleyProse(ID_PARLEY)) {
+  if (enParley.has(line)) flag('parley', 'left in English', line)
 }
 
 // The glossary lights terms up wherever they are said. An entry nobody ever
 // says is not wrong, but it is worth knowing about — an Era 0 term may only
 // ever appear in the prologue's own panels, and a typo in an alias looks
 // exactly the same from here.
-// Era 1's skits are English only, so the register and translation checks have
-// nothing to compare — but the digits rule is about reading, not language.
-console.log('\nera 1 skits')
-for (const skit of SKITS) {
-  skit.lines.forEach((line, i) => {
-    const found = line.text.replace(NOT_AN_AMOUNT, ' ').match(SPOKEN_NUMBER_EN)
-    if (found) flag(`${skit.id}[${i}] ${line.who}`, `EN spells a number: ${[...new Set(found)].join(', ')}`, line.text)
-  })
-}
-
 console.log('\nglossary')
 const said = new Set<string>()
 const sweep = (text: string) => findTerms(text).forEach((hit) => said.add(hit.id))
@@ -199,6 +287,8 @@ for (const text of ID_CHAPTERS) {
 }
 for (const skit of SURVEY_SKITS) for (const line of skit.lines) sweep(line.text)
 for (const text of Object.values(ID_SURVEY_SKITS)) for (const line of text.lines) sweep(line)
+for (const skit of ERA2_SKITS) for (const line of skit.lines) sweep(line.text)
+for (const text of Object.values(ID_ERA2_SKITS)) for (const line of text.lines) sweep(line)
 
 for (const term of TERMS) {
   const text = ID_TERMS[term.id]
@@ -208,11 +298,22 @@ for (const term of TERMS) {
   }
   // Same digits rule as the script. A glossary entry is read the same way.
   for (const [label, line, pattern] of [
-    ['EN', [term.what, term.why, term.real].filter(Boolean).join(' '), SPOKEN_NUMBER_EN],
-    ['ID', [text.what, text.why, text.real].filter(Boolean).join(' '), SPOKEN_NUMBER_ID],
+    ['EN', [term.what, term.why, term.real, ...(term.steps ?? [])].filter(Boolean).join(' '), SPOKEN_NUMBER_EN],
+    ['ID', [text.what, text.why, text.real, ...(text.steps ?? [])].filter(Boolean).join(' '), SPOKEN_NUMBER_ID],
   ] as const) {
     const found = line!.replace(NOT_AN_AMOUNT, ' ').match(pattern)
     if (found) flag(term.id, `${label} spells a number: ${[...new Set(found)].join(', ')}`, line!)
+  }
+
+  // A diagram numbers its pins and the glossary supplies the words for them. A
+  // pin with nothing to say is a number floating on a drawing, which is worse
+  // than no number at all — so the two counts have to agree, in both languages.
+  const pins = figureFor(term.id)?.pins
+  if (pins === undefined) {
+    if (term.steps) flag(term.id, 'has steps written but no diagram drawn for them', '')
+  } else {
+    if ((term.steps?.length ?? 0) !== pins) flag(term.id, `diagram draws ${pins} pins, EN writes ${term.steps?.length ?? 0}`, '')
+    if ((text.steps?.length ?? 0) !== pins) flag(term.id, `diagram draws ${pins} pins, ID writes ${text.steps?.length ?? 0}`, '')
   }
 }
 const unsaid = TERMS.filter((t) => !said.has(t.id))

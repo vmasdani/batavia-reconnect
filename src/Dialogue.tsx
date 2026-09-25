@@ -10,9 +10,12 @@
  * what sits behind them and what happens at the end are the caller's business.
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { castById, castColor, portraitAt, type CastMember } from './cast'
-import { TermText } from './Glossary'
+import { TermText, useHoveredTerm, useOpenTerm, useTermsByIds } from './Glossary'
+import { TechFigure } from './figures'
+import { findTerms } from './glossary'
+import { photoFor } from './photos'
 
 /** Milliseconds per character. Fast enough to read past, slow enough to hear. */
 const TYPE_MS = 18
@@ -28,6 +31,14 @@ export interface DialogueLine {
   /** A cast id from `cast.ts`, or `narrator`. */
   who: string
   text: string
+  /**
+   * Technologies to show while this line is being said — glossary term ids.
+   *
+   * Set only on the lines where somebody names the thing the era is about to
+   * build. Every other term shows its photograph on hover and nothing before
+   * that. See `StoryLine.shows`.
+   */
+  shows?: string[]
 }
 
 interface DialogueProps {
@@ -103,6 +114,28 @@ export function Dialogue({
     }, TYPE_MS)
     return () => window.clearInterval(timer)
   }, [full])
+
+  /**
+   * The technologies on the plate over the box.
+   *
+   * Two ways in, and only two. A line that announces what the era is about to
+   * build puts the thing itself on screen — that is the moment a picture is
+   * worth interrupting a scene for. Everything else waits for the reader to
+   * rest on the blue word, which is a question being asked rather than an
+   * answer being volunteered.
+   *
+   * A build line holds off until its own words have been typed, so the picture
+   * arrives with the sentence rather than ahead of it.
+   */
+  const hovered = useHoveredTerm()
+  const announced = useTermsByIds(line?.shows)
+  const said = useMemo(() => {
+    if (!line?.shows?.length) return false
+    const hits = findTerms(full).filter((hit) => line.shows!.includes(hit.id))
+    return hits.length === 0 || hits.some((hit) => hit.end <= shown)
+  }, [full, shown, line])
+  const plate = hovered ? [hovered] : said ? announced : []
+  const openTerm = useOpenTerm()
 
   const done = shown >= full.length
   const last = index + 1 >= lines.length
@@ -187,6 +220,28 @@ export function Dialogue({
               {closeLabel}
             </button>
           </div>
+
+          {plate.length > 0 && (
+            // Standing on the box rather than over the stage, so it is next to
+            // the sentence that put it there. The portrait strip is 92px of
+            // fixed height whether anybody is standing in it or not, and a
+            // picture floating above an empty strip reads as unrelated to the
+            // line underneath it.
+            <aside className="dialogue__plate" onClick={(event) => event.stopPropagation()}>
+              {plate.map((term) => (
+                <div className="dialogue__shot" key={term.id}>
+                  <button
+                    type="button"
+                    className="dialogue__shot-name"
+                    onClick={() => openTerm(term.id)}
+                  >
+                    {term.name}
+                  </button>
+                  <TechFigure id={term.id} photo={photoFor(term.id)} photoOnly />
+                </div>
+              ))}
+            </aside>
+          )}
 
           <p className={`dialogue__text${narrating ? ' is-narration' : ''}`} onClick={tap}>
             <TermText text={full} upTo={shown} />

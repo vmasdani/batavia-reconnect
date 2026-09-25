@@ -1,5 +1,5 @@
 /**
- * Which of the four things the page is showing.
+ * Which of the six things the page is showing.
  *
  * Plain state rather than a router: there are no URLs to preserve, and the map
  * costs a WebGL context to mount, so the game is only rendered while it is the
@@ -12,6 +12,9 @@ import { MainMenu, type Mode } from './MainMenu'
 import { Story } from './Story'
 import { Prologue } from './Prologue'
 import { GlossaryPage, GlossaryProvider } from './Glossary'
+import { Simulator } from './Simulator'
+import { Routing } from './Routing'
+import { EraOpening } from './EraOpening'
 import { useGame } from './store'
 import type { Lang } from './lang'
 
@@ -29,7 +32,9 @@ function storedLang(): Lang {
 export function Root() {
   const [mode, setMode] = useState<Mode>('menu')
   const [lang, setLang] = useState<Lang>(storedLang)
+  const [reading, setReading] = useState(2)
   const enterEra = useGame((s) => s.enterEra)
+  const readEra = useGame((s) => s.readEra)
   const carryIntoEra1 = useGame((s) => s.carryIntoEra1)
 
   // The era is loaded before the screen mounts, because the map reads the
@@ -38,6 +43,12 @@ export function Root() {
     if (next === 'era0') enterEra(0)
     if (next === 'game') enterEra(1)
     setMode(next)
+  }
+
+  const read = (era: number) => {
+    setReading(era)
+    readEra(era)
+    setMode('read')
   }
 
   const pickLang = (next: Lang) => {
@@ -57,6 +68,10 @@ export function Root() {
       <Story lang={lang} onLang={pickLang} onExit={() => setMode('menu')} />
     ) : mode === 'glossary' ? (
       <GlossaryPage lang={lang} onExit={() => setMode('menu')} />
+    ) : mode === 'sim' ? (
+      <Simulator lang={lang} onExit={() => setMode('menu')} />
+    ) : mode === 'route' ? (
+      <Routing lang={lang} onExit={() => setMode('menu')} />
     ) : mode === 'era0' ? (
       <Prologue
         lang={lang}
@@ -70,8 +85,10 @@ export function Root() {
       />
     ) : mode === 'game' ? (
       <App lang={lang} onExit={() => setMode('menu')} />
+    ) : mode === 'read' ? (
+      <EraOpening era={reading} lang={lang} onDone={() => setMode('menu')} />
     ) : (
-      <MainMenu lang={lang} onLang={pickLang} onPick={pick} />
+      <MainMenu lang={lang} onLang={pickLang} onPick={pick} onRead={read} />
     )
 
   return <GlossaryProvider lang={lang}>{screen}</GlossaryProvider>

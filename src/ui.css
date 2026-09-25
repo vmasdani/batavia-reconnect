@@ -883,6 +883,37 @@ html, body, #root {
 }
 .menu__choice-note { font-size: 13px; line-height: 1.55; color: var(--ink-dim); }
 
+/* The eras that are written but not built. Deliberately quieter and denser than
+   the four doors above: six of them, and none is where a first-time player
+   should start. */
+.menu__rest {
+  margin: 0; width: 100%;
+  font-size: 11px; letter-spacing: 0.13em; text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.menu__eras {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 100%;
+}
+.menu__era {
+  display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 2px 10px;
+  align-items: baseline; text-align: left;
+  padding: 10px 13px; border-radius: 7px; cursor: pointer;
+  font: inherit; color: inherit;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--edge);
+  transition: border-color 0.14s ease, background 0.14s ease;
+}
+.menu__era:hover {
+  background: rgba(255, 179, 71, 0.08);
+  border-color: rgba(255, 179, 71, 0.4);
+}
+.menu__era-no {
+  grid-row: span 2;
+  font-size: 15px; font-weight: 700; color: var(--amber-soft); text-align: right;
+}
+.menu__era-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+.menu__era-tech { font-size: 11px; letter-spacing: 0.08em; color: var(--ink-dim); }
+
 .menu__crew { list-style: none; margin: 0; padding: 0; display: flex; gap: 22px; }
 .menu__crew li { display: grid; justify-items: center; gap: 5px; }
 .menu__crew img { border-radius: 7px; opacity: 0.8; }
@@ -948,6 +979,31 @@ html, body, #root {
   opacity: 0.82;
   animation: backdrop-in 0.55s ease-out;
 }
+/* The photographs are 192 pixels across and meant to stay that way: the browser
+   blows them up with hard edges, so the picture is on the same grid as the map
+   and the portraits instead of being a photograph pasted into a drawn game. */
+.backdrop__photo {
+  display: block; width: 100%; height: 100%; object-fit: cover;
+  image-rendering: pixelated;
+  /* Dimmer and cooler than the drawn scenes, which were built in the palette;
+     a photograph was not, and at full strength it competes with the dialogue. */
+  opacity: 0.5;
+  filter: brightness(0.78) saturate(0.68) contrast(1.02) sepia(0.14);
+  animation: backdrop-photo-in 0.55s ease-out;
+}
+/* The licence on most of these is given on condition the credit is shown, so
+   it is on the page — in the corner, at the size of a caption nobody has to
+   read, over the darkest part of the scrim. */
+.backdrop__credit {
+  position: absolute; right: 10px; bottom: 8px; margin: 0; z-index: 1;
+  font-size: 9.5px; line-height: 1.35;
+  color: rgba(164, 179, 186, 0.42);
+  display: flex; flex-wrap: wrap; gap: 0 6px;
+}
+.backdrop__credit a { color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor; }
+.backdrop__credit a:hover { color: var(--ink-dim); }
+.backdrop__credit span { opacity: 0.75; }
+
 /* Darkest where the text sits, so no scene needs to be designed around it. */
 .backdrop__scrim {
   position: absolute; inset: 0;
@@ -961,6 +1017,11 @@ html, body, #root {
 @keyframes backdrop-in {
   from { opacity: 0; transform: scale(1.03); }
   to { opacity: 0.82; transform: none; }
+}
+
+@keyframes backdrop-photo-in {
+  from { opacity: 0; transform: scale(1.03); }
+  to { opacity: 0.5; transform: none; }
 }
 
 .story-card {
@@ -984,6 +1045,40 @@ html, body, #root {
 }
 .story-card__begin { margin-top: 10px; min-width: 128px; }
 .story-card__buttons { display: flex; gap: 10px; margin-top: 10px; }
+.story-card__buttons .story-card__begin { margin-top: 0; }
+
+/* The skits beside a chapter. Same card furniture as the title card, because
+   it is reached from there and returns to it — only the middle is a list. */
+.story-skits {
+  position: absolute; inset: 0; overflow: auto;
+  display: grid; align-content: center; justify-items: center; gap: 14px;
+  padding: 60px 24px; text-align: center;
+  animation: skit-rise 0.3s ease-out;
+}
+.story-skits > * { position: relative; z-index: 1; }
+.story-skits__era {
+  margin: 0; font-size: 12px; letter-spacing: 0.34em; text-transform: uppercase; color: var(--violet);
+}
+.story-skits__era span { opacity: 0.5; margin: 0 4px; }
+.story-skits__title {
+  margin: 0; font-size: clamp(22px, 4vw, 34px);
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--amber-soft);
+}
+.story-skits__note { margin: 0; max-width: 46ch; font-size: 13.5px; line-height: 1.7; color: var(--ink-dim); }
+.story-skits__list { list-style: none; display: grid; gap: 8px; margin: 6px 0 0; padding: 0; width: min(520px, 100%); }
+.story-skits__item {
+  width: 100%; cursor: pointer; font: inherit; text-align: left;
+  display: flex; align-items: baseline; gap: 12px;
+  padding: 11px 14px; border-radius: 8px;
+  color: var(--ink); background: rgba(255, 255, 255, 0.03); border: 1px solid var(--edge);
+  transition: background 160ms, border-color 160ms;
+}
+.story-skits__item:hover { background: rgba(255, 255, 255, 0.07); border-color: var(--amber-soft); }
+.story-skits__name { font-size: 14px; }
+.story-skits__cast {
+  margin-left: auto; flex: none;
+  font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-dim);
+}
 
 /* --- back out of the game -------------------------------------------------- */
 
@@ -1114,13 +1209,28 @@ html, body, #root {
    and how the loop is actually played. Scrolls, because Era 1 has six points
    and a laptop is not tall. */
 
+/* A scrolling body and a footer bar, rather than one long scroll with the
+   button floating in it: the page is longer than a short window and the only
+   way into the game must never be below the fold or sitting over the text. */
 .briefing {
-  position: absolute; inset: 0; z-index: 1; overflow-y: auto;
-  display: grid; align-content: start; justify-items: center;
-  gap: 10px; padding: 34px 24px 20px;
+  position: absolute; inset: 0; z-index: 1;
+  display: grid; grid-template-rows: minmax(0, 1fr) auto;
   animation: skit-rise 0.3s ease-out;
 }
-.briefing > * { width: min(760px, 100%); }
+.briefing__scroll {
+  overflow-y: auto;
+  display: grid; align-content: start; justify-items: center;
+  gap: 10px; padding: 34px 24px 26px;
+}
+.briefing__scroll > * { width: min(760px, 100%); }
+/* An era that is read rather than played has no how-to-play list, which leaves
+   a short card floating at the top of a tall screen. Centre it instead. */
+.briefing--short .briefing__scroll { align-content: center; gap: 14px; }
+.briefing__foot {
+  display: flex; justify-content: center; padding: 12px 24px 16px;
+  background: rgba(8, 13, 16, 0.92);
+  border-top: 1px solid var(--edge);
+}
 .briefing__era {
   margin: 0; font-size: 12px; letter-spacing: 0.34em; text-transform: uppercase;
   color: var(--violet); text-align: center;
@@ -1136,14 +1246,6 @@ html, body, #root {
 }
 
 .briefing__stakes { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-.briefing__stakes--one { grid-template-columns: minmax(0, 1fr); }
-/* Where the era starts from, and what it adds up to. Neither is a win or a
-   loss, so neither takes the green or the red. */
-.briefing__from { border-left-color: var(--violet) !important; }
-.briefing__from h2 { color: var(--violet) !important; }
-.briefing__stakes--one section { border-left-color: var(--amber); }
-.briefing__stakes--one h2 { color: var(--amber-soft); }
-.briefing__stakes--one p { color: var(--ink); }
 .briefing__stakes section {
   padding: 13px 15px; border-radius: 8px;
   background: var(--panel); border: 1px solid var(--edge);
@@ -1156,6 +1258,16 @@ html, body, #root {
 }
 .briefing__against h2 { color: var(--down); }
 .briefing__stakes p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink-dim); }
+
+/* The primer's two full-width boxes: where the era starts from, and what it
+   adds up to. Neither is a win or a loss, so neither takes the green or the
+   red. These come after the base rules so they win on order. */
+.briefing__stakes--one { grid-template-columns: minmax(0, 1fr); }
+.briefing__stakes--one section { border-left-color: var(--amber); }
+.briefing__stakes--one h2 { color: var(--amber-soft); }
+.briefing__stakes--one p { color: var(--ink); }
+.briefing__from { border-left-color: var(--violet); }
+.briefing__from h2 { color: var(--violet); }
 
 .briefing__how-head {
   margin: 4px 0 0; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
@@ -1181,7 +1293,10 @@ html, body, #root {
 /* The primer is read, not scanned, so its points get room to breathe. */
 .briefing__how--primer li { padding: 12px 15px; gap: 4px 10px; }
 .briefing__how--primer strong { color: var(--amber-soft); }
+/* Third child of a 2-column grid whose first column is 22px wide, so it has to
+   be put back under the text or it wraps one word per line. */
 .briefing__catch {
+  grid-column: 2;
   margin-top: 5px; padding-left: 9px;
   border-left: 2px solid rgba(226, 112, 93, 0.5);
   color: rgba(164, 179, 186, 0.85) !important;
@@ -1193,15 +1308,689 @@ html, body, #root {
 }
 .briefing__how span { font-size: 13px; line-height: 1.6; color: var(--ink-dim); }
 
-/* Sticky rather than sized to fit: the page is 6 points long and a short
-   window would otherwise put the only way into the game below the fold. It
-   sits over the text, so unlike the rest of the page it needs to be opaque —
-   and it opts out of the 760px column its siblings share. */
-.briefing__begin {
-  position: sticky; bottom: 14px; z-index: 2;
-  width: auto; justify-self: center; margin-top: 10px;
-  padding: 10px 26px; font-size: 13px;
-  background: #3a2a14; border-color: rgba(255, 179, 71, 0.75);
-  box-shadow: 0 10px 34px rgba(8, 13, 16, 0.95);
+.briefing__begin { padding: 10px 30px; font-size: 13px; min-width: 180px; }
+
+/* --- the technology plates --------------------------------------------------
+   A photograph of the real object and a diagram of the path a signal takes
+   through it, wherever a technology is named: in the era primer the first time
+   it comes up, and on every glossary entry.
+
+   The diagram carries no words of its own — the pins are numbered and the words
+   for them come from the glossary, so they translate. The numbers are set in
+   the same blue as a glossary link, because that is already what "this is a
+   term, look here" means everywhere else in the game. */
+
+.figure {
+  --fig-line: rgba(226, 233, 240, 0.62);
+  --fig-fill: rgba(255, 255, 255, 0.045);
+  --fig-edge: rgba(164, 179, 186, 0.42);
+  --fig-hot: var(--amber);
+  --fig-pin: var(--term);
+  --fig-pin-bg: #0c1418;
+  --fig-no: var(--down);
+
+  display: grid; gap: 10px; margin: 2px 0;
+  grid-template-columns: minmax(0, 1fr);
 }
-.briefing__begin:hover { background: #4a3418; }
+/* Side by side once there is room for the photograph not to shrink the
+   diagram below the point of being readable. The steps stay under the drawing
+   they number, in its column. */
+@media (min-width: 760px) {
+  .figure { grid-template-columns: 190px minmax(0, 1fr); align-items: start; }
+  .figure__steps { grid-column: 2; }
+}
+
+.figure__photo { display: grid; gap: 5px; }
+.figure__photo img {
+  display: block; width: 100%; height: 132px; object-fit: cover;
+  /* Some of these are line art on a transparent background — Morse code is
+     black dots on nothing — and black ink over a black page is no picture at
+     all. Paper behind every one of them; the opaque photographs cover it. */
+  background: #dfe4e8;
+  border-radius: 6px; border: 1px solid var(--edge);
+  /* These are photographs of grey machinery in grey rooms dropped into an
+     amber-on-slate game. Warming and dimming them stops the page looking like
+     two designs stapled together. */
+  filter: saturate(0.72) contrast(1.04) brightness(0.94) sepia(0.12);
+}
+.figure__credit {
+  margin: 0; font-size: 9.5px; line-height: 1.35;
+  color: rgba(164, 179, 186, 0.55);
+  display: flex; flex-wrap: wrap; gap: 0 6px;
+}
+.figure__credit a { color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor; }
+.figure__credit a:hover { color: var(--ink-dim); }
+.figure__credit span { opacity: 0.75; }
+
+.figure__plate {
+  display: grid;
+  padding: 10px 12px; border-radius: 7px;
+  background: rgba(0, 0, 0, 0.22); border: 1px solid var(--edge);
+}
+.figure__svg { display: block; width: 100%; height: auto; }
+
+/* Numbered to match the pins in the drawing above, so the eye can go back and
+   forth. Tabular figures keep the column straight when a step reaches 10. */
+.figure__steps {
+  list-style: none; counter-reset: pin; margin: 0; padding: 0;
+  display: grid; gap: 5px;
+}
+.figure__steps li {
+  counter-increment: pin;
+  display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 8px;
+  font-size: 11.5px; line-height: 1.5; color: var(--ink-dim);
+}
+.figure__steps li::before {
+  content: counter(pin);
+  font-size: 10px; font-weight: 700; color: var(--term);
+  font-variant-numeric: tabular-nums; text-align: right; padding-top: 1px;
+}
+
+/* In the glossary's card grid there is no room for a two-column plate, and the
+   cards are being scanned rather than studied. */
+.figure--compact { grid-template-columns: minmax(0, 1fr); }
+.figure--compact .figure__steps { grid-column: 1; }
+/* The photograph on its own, with nothing beside it to make room for. */
+.figure--photo { grid-template-columns: minmax(0, 1fr); }
+.figure--compact .figure__photo img { height: 106px; }
+.figure--compact .figure__steps li { font-size: 11px; }
+
+/* A primer point is a numbered row whose first column is 22px of counter, so
+   the plate has to be put back under the text like the catch above it. The
+   photograph stands on its own here, so it is held to the width it had when a
+   diagram sat beside it rather than stretched across the paragraph. */
+.briefing__plate { grid-column: 2; margin-top: 9px; }
+.briefing__plate .figure--photo { max-width: 240px; }
+/* And the step list is a list inside that list, so the primer's own rules for
+   `li` and `span` reach it. Put them back. */
+.briefing__plate .figure__steps li {
+  padding: 0; border: 0; border-radius: 0; background: none;
+}
+.figure__credit,
+.figure__credit a,
+.figure__credit span { font-size: 9.5px; line-height: 1.35; }
+
+/* A term panel with a photograph, a diagram and 6 steps in it is taller than
+   some phones, and it opens over a scene that must not scroll behind it. */
+.modal--term { max-height: min(86vh, 720px); overflow-y: auto; }
+
+/* --- the technology being talked about --------------------------------------
+   Two ways a photograph reaches the screen mid-scene, and only two: resting on
+   a blue word, or a line that names what the era is about to build. Both put
+   the same card over the dialogue box.
+
+   The photograph only. The drawn schematic is a thing to study, and studying
+   belongs in the glossary — a click away on the term's name — not in the
+   middle of somebody's sentence.
+
+   Positioned rather than stacked, so a picture appearing mid-line never moves
+   the sentence being read, and anchored to the box rather than to the stage so
+   it stands directly over the sentence that put it there. */
+
+.dialogue__box { position: relative; }
+
+.dialogue__plate {
+  position: absolute; z-index: 3; left: -1px; bottom: calc(100% + 9px);
+  display: flex; gap: 11px; align-items: flex-end;
+  cursor: default;
+}
+
+.dialogue__shot {
+  width: 172px; display: grid; gap: 7px;
+  padding: 10px 11px 11px; border-radius: 8px;
+  background: rgba(13, 20, 24, 0.97);
+  border: 1px solid rgba(116, 199, 255, 0.3);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
+  animation: plate-in 0.18s ease-out;
+}
+.dialogue__shot-name {
+  justify-self: start; padding: 0; border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: 12.5px; letter-spacing: 0.04em; color: var(--term);
+  border-bottom: 1px dotted rgba(116, 199, 255, 0.5);
+}
+.dialogue__shot-name:hover { color: #a9deff; }
+.dialogue__shot .figure__photo img { height: 104px; }
+
+/* A short screen puts the centred dialogue nearer the top, so there is less
+   room above it. Take it out of the picture rather than off the page. */
+@media (max-height: 840px) {
+  .dialogue__shot { width: 152px; }
+  .dialogue__shot .figure__photo img { height: 84px; }
+}
+
+@keyframes plate-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* --- Era 0: the exchange at a gate ---------------------------------------- */
+/* The rules are in `parley.ts`. What this has to carry is a reading order: who
+   is talking and where, the one line saying what they need, and the offers. */
+
+.modal--parley { width: min(660px, 100%); gap: 13px; }
+
+.parley__head { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 12px; }
+.parley__who { border-radius: 5px; object-fit: cover; }
+.parley__lead { margin: 3px 0 0; font-size: 12.5px; color: var(--ink-dim); }
+
+/* The whole puzzle. Loud enough that nobody scrolls past it to the buttons. */
+.parley__tell {
+  margin: 0; padding: 12px 14px; border-radius: 5px;
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 2px solid rgba(255, 179, 71, 0.5);
+  font-size: 14px; line-height: 1.5; color: var(--ink);
+}
+
+.parley__said {
+  margin: 0; font-size: 13px; line-height: 1.45; padding-left: 10px;
+  border-left: 2px solid var(--ink-dim); color: var(--ink-dim);
+}
+.parley__said--good { border-left-color: #6ee7b7; color: #cdeee0; }
+.parley__said--bad { border-left-color: #ff6a5a; color: #ffcfc7; }
+.parley__said-card {
+  display: block; font-size: 10.5px; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--amber-soft); opacity: 0.75; margin-bottom: 2px;
+}
+
+.parley__hand { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
+.parley__card {
+  display: grid; align-content: start; gap: 5px; text-align: left;
+  padding: 10px 11px; border-radius: 5px; font: inherit; cursor: pointer;
+  background: rgba(255, 255, 255, 0.04); color: var(--ink);
+  border: 1px solid var(--edge);
+}
+.parley__card:hover:not(:disabled) {
+  background: rgba(255, 179, 71, 0.12); border-color: rgba(255, 179, 71, 0.45);
+}
+.parley__card:disabled { opacity: 0.4; cursor: not-allowed; }
+.parley__card-label { font-size: 13px; font-weight: 700; line-height: 1.25; }
+.parley__card-note { font-size: 11px; line-height: 1.35; color: var(--ink-dim); }
+.parley__card-where { font-size: 11px; letter-spacing: 0.05em; color: var(--amber-soft); }
+
+.parley__verdict {
+  margin: 0; font-size: 13.5px; line-height: 1.45; padding: 10px 12px; border-radius: 5px;
+  background: rgba(255, 106, 90, 0.1); color: #ffcfc7;
+  border-left: 2px solid #ff6a5a;
+}
+.parley__verdict.is-good {
+  background: rgba(110, 231, 183, 0.1); color: #cdeee0; border-left-color: #6ee7b7;
+}
+.parley__verdict em { color: var(--ink-dim); font-size: 12px; }
+
+/* Four offers do not fit across a narrow screen, and the modal is the one
+   panel that stays up when the HUD's side columns are hidden. */
+@media (max-width: 760px) {
+  .parley__hand { grid-template-columns: repeat(2, 1fr); }
+  .parley__who { display: none; }
+  .parley__head { grid-template-columns: 1fr; }
+}
+
+/* --- Era 1: the tuning bench ---------------------------------------------- */
+/* One slider, one meter, one picture. The meter is the biggest thing in the
+   dialog on purpose — finding the carrier is the whole task. */
+
+.modal--bench { width: min(600px, 100%); gap: 13px; }
+
+.bench__head { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; }
+.bench__who { border-radius: 5px; object-fit: cover; }
+.bench__lead { margin: 3px 0 0; font-size: 12.5px; color: var(--ink-dim); }
+.bench__khz { display: grid; justify-items: end; gap: 1px; font-size: 10.5px; color: var(--ink-dim); }
+.bench__khz strong { font-size: 21px; color: var(--amber-soft); font-variant-numeric: tabular-nums; }
+
+.bench__meter {
+  position: relative; height: 34px; border-radius: 5px; overflow: hidden;
+  background: rgba(255, 255, 255, 0.05); border: 1px solid var(--edge);
+  display: grid; align-items: center;
+}
+.bench__meter-fill {
+  position: absolute; inset: 0 auto 0 0;
+  background: linear-gradient(90deg, rgba(255, 179, 71, 0.3), rgba(110, 231, 183, 0.55));
+  transition: width 60ms linear;
+}
+.bench__meter-word {
+  position: relative; justify-self: center;
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.bench__dial { display: grid; gap: 6px; }
+.bench__dial input[type='range'] { width: 100%; accent-color: var(--amber); cursor: ew-resize; }
+.bench__halves {
+  display: flex; justify-content: space-between;
+  font-size: 11px; letter-spacing: 0.05em; color: var(--ink-dim);
+}
+.bench__halves span { display: grid; gap: 1px; }
+.bench__halves span:last-child { text-align: right; }
+.bench__halves em { font-size: 10px; opacity: 0.6; font-style: normal; }
+.bench__halves .is-on { color: var(--amber-soft); }
+
+.bench__reach { display: grid; gap: 5px; }
+.bench__reach svg { width: 100%; height: auto; display: block; }
+.bench__reach-note { margin: 0; font-size: 12px; line-height: 1.4; color: var(--ink-dim); }
+
+@media (max-width: 700px) {
+  .bench__head { grid-template-columns: 1fr auto; }
+  .bench__who { display: none; }
+}
+
+.bench__legs {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-wrap: wrap; gap: 6px 8px;
+}
+.bench__leg {
+  display: flex; align-items: center; gap: 6px;
+  padding: 3px 8px; border-radius: 4px; font-size: 12px;
+  background: rgba(255, 255, 255, 0.04); border: 1px solid var(--edge);
+}
+.bench__leg em { font-style: normal; font-size: 10.5px; opacity: 0.7; }
+.bench__leg-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.bench__leg.is-day { color: #6ee7b7; }
+.bench__leg.is-night { color: var(--amber-soft); }
+.bench__leg.is-dead, .bench__leg.is-off { color: #ff6a5a; }
+/* Hollow, matching the strip: the signal gets there, the station is not
+   listening on this half of the dial. */
+.bench__leg.is-off .bench__leg-dot { background: none; box-shadow: inset 0 0 0 1.5px currentColor; }
+
+/* --- the MC14500B workbench --------------------------------------------------
+   A machine with 1 bit of state has almost nothing to show, and that is the
+   point: 3 columns — what it is running, what it holds, and the clock — with a
+   lit cell for every bit that exists. The lamps and the register cells use the
+   same square so a bit reads the same wherever it appears. */
+
+.sim {
+  position: fixed; inset: 0; display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  background: radial-gradient(circle at 50% 0%, #16222a 0%, #0b1114 62%, #080d10 100%);
+}
+.sim__bar {
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  padding: 12px 18px; border-bottom: 1px solid var(--edge);
+}
+.sim__title { margin: 0; font-size: 15px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--amber-soft); }
+.sim__note { font-size: 12px; color: var(--ink-dim); }
+
+.sim__body {
+  overflow-y: auto; padding: 16px 18px 28px;
+  display: grid; gap: 14px;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) minmax(0, 0.8fr);
+  align-items: start;
+}
+@media (max-width: 1080px) { .sim__body { grid-template-columns: minmax(0, 1fr); } }
+
+.sim__panel {
+  padding: 12px 14px; border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02); border: 1px solid var(--edge);
+  display: grid; gap: 10px; align-content: start;
+}
+.sim__panel h2 {
+  margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--term);
+}
+.sim__panel h3 {
+  margin: 4px 0 0; font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-dim);
+}
+
+/* The listing. The line being executed is the only thing highlighted, because
+   with 1 instruction per clock it is also the entire explanation of what just
+   happened. */
+.sim__listing {
+  list-style: none; margin: 0; padding: 0; display: grid; gap: 1px;
+  font-size: 12px; line-height: 1.5;
+}
+.sim__listing li {
+  display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px;
+  padding: 1px 6px; border-radius: 3px; color: var(--ink-dim);
+}
+.sim__listing li.is-at {
+  background: rgba(255, 179, 71, 0.14); color: var(--ink);
+  box-shadow: inset 2px 0 0 var(--amber);
+}
+.sim__addr { color: rgba(164, 179, 186, 0.5); font-variant-numeric: tabular-nums; }
+.sim__listing code, .sim__now code { white-space: pre; }
+
+.sim__editor { display: grid; gap: 5px; }
+.sim__editor span { font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-dim); }
+.sim__editor textarea {
+  width: 100%; resize: vertical; padding: 8px 10px;
+  font: inherit; font-size: 12px; line-height: 1.5;
+  color: var(--ink); background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--edge); border-radius: 5px;
+}
+.sim__editor textarea:focus { outline: none; border-color: var(--amber); }
+.sim__error { margin: 0; font-size: 12px; color: #ff6a5a; }
+
+.sim__regs { display: flex; flex-wrap: wrap; gap: 6px; }
+.sim__lamp {
+  display: flex; align-items: center; gap: 6px;
+  padding: 3px 8px; border-radius: 4px; font-size: 11px; letter-spacing: 0.06em;
+  color: var(--ink-dim); background: rgba(255, 255, 255, 0.04); border: 1px solid var(--edge);
+}
+.sim__lamp-dot { width: 8px; height: 8px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px currentColor; }
+.sim__lamp.is-on { color: var(--amber-soft); }
+.sim__lamp.is-on .sim__lamp-dot { background: currentColor; }
+
+.sim__now {
+  margin: 0; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  padding: 7px 10px; border-radius: 5px;
+  background: rgba(0, 0, 0, 0.26); border: 1px solid var(--edge);
+  font-size: 12.5px;
+}
+.sim__clocks { margin-left: auto; font-size: 11px; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+
+.sim__reg { display: grid; grid-template-columns: 34px minmax(0, 1fr) 34px; gap: 8px; align-items: center; }
+.sim__reg-name { font-size: 11px; letter-spacing: 0.1em; color: var(--ink-dim); }
+.sim__reg-bits { display: flex; gap: 4px; }
+.sim__reg-note { font-size: 11px; color: var(--ink-dim); text-align: right; font-variant-numeric: tabular-nums; }
+
+/* One square per bit, lit or not. Nothing else on this screen is a number. */
+.sim__bit {
+  display: grid; place-items: center;
+  width: 22px; height: 22px; border-radius: 3px;
+  font-size: 11px; font-variant-numeric: tabular-nums;
+  color: rgba(164, 179, 186, 0.45);
+  background: rgba(0, 0, 0, 0.3); border: 1px solid var(--edge);
+}
+.sim__bit.is-on { color: #0b1114; background: var(--amber-soft); border-color: var(--amber); }
+.sim__bit--set { cursor: pointer; }
+.sim__bit--set:hover { border-color: var(--amber); }
+
+.sim__sum { margin: 2px 0 0; font-size: 13px; color: var(--ink-dim); }
+.sim__sum.is-done { color: var(--amber-soft); }
+.sim__sum em { font-style: normal; color: #ff6a5a; }
+
+.sim__pins {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 5px;
+}
+.sim__pins li { display: flex; align-items: center; gap: 6px; font-size: 11.5px; }
+.sim__kind { margin-left: auto; font-size: 9.5px; color: rgba(164, 179, 186, 0.45); }
+
+.sim__buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.sim__speed { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-dim); }
+.sim__speed-pick {
+  padding: 3px 8px; border-radius: 4px; font: inherit; font-size: 11px; cursor: pointer;
+  color: var(--ink-dim); background: rgba(255, 255, 255, 0.04); border: 1px solid var(--edge);
+}
+.sim__speed-pick.is-on { color: #0b1114; background: var(--amber-soft); border-color: var(--amber); }
+
+.sim__aside { margin: 6px 0 0; font-size: 11.5px; line-height: 1.55; color: var(--ink-dim); }
+
+/* Two processors and two programs, picked with the same chip-shaped button the
+   clock speed uses. The gap between the pairs is the only thing separating
+   "which machine" from "which program", and it is enough. */
+.sim__picks { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.sim__picks-gap { width: 14px; }
+.sim__pick {
+  padding: 4px 10px; border-radius: 4px; font: inherit; font-size: 11.5px; cursor: pointer;
+  color: var(--ink-dim); background: rgba(255, 255, 255, 0.04); border: 1px solid var(--edge);
+}
+.sim__pick:hover { border-color: var(--amber); }
+.sim__pick.is-on { color: #0b1114; background: var(--amber-soft); border-color: var(--amber); }
+
+.sim__blurb { margin: 0; font-size: 11.5px; line-height: 1.55; color: var(--ink-dim); }
+
+/* Folded away by default: it is a reference, and the listing beside it is the
+   thing being read. */
+.sim__words summary {
+  cursor: pointer; font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-dim);
+}
+.sim__words ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; }
+.sim__words li {
+  display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 8px;
+  font-size: 11px; line-height: 1.45; color: var(--ink-dim);
+}
+.sim__words code { color: var(--amber-soft); }
+
+/* A byte where the bit machines have a bit: same cell, wider, so the two kinds
+   of access read as the same board seen two ways. */
+.sim__byte {
+  display: grid; place-items: center;
+  min-width: 30px; height: 22px; padding: 0 5px; border-radius: 3px;
+  font-size: 11px; font-variant-numeric: tabular-nums;
+  color: var(--amber-soft); background: rgba(255, 179, 71, 0.12); border: 1px solid var(--edge);
+}
+
+/* The same program on all three machines. The bar is logarithmic because the
+   ends are 3 orders of magnitude apart and a linear bar would draw the 8051 as
+   nothing at all — which overstates a case that is strong enough already. */
+.sim__race { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.sim__race li {
+  display: grid; grid-template-columns: 88px minmax(0, 1fr) 58px; gap: 8px; align-items: center;
+  font-size: 11px; color: var(--ink-dim);
+}
+.sim__race li.is-on { color: var(--ink); }
+.sim__race code { font-size: 11px; }
+.sim__race-bar { height: 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.05); overflow: hidden; }
+.sim__race-bar span { display: block; height: 100%; background: var(--amber); opacity: 0.75; }
+.sim__race li.is-on .sim__race-bar span { opacity: 1; }
+.sim__race-time { text-align: right; font-variant-numeric: tabular-nums; color: var(--amber-soft); }
+.sim__race-size { grid-column: 2 / 4; margin-top: -3px; font-size: 10px; opacity: 0.7; }
+
+/* --- the routing screen ---------------------------------------------------
+   Same chrome as the workbench, because it is the same kind of room: a thing
+   from the story, running, with its assumptions printed next to it. Only the
+   proportions differ — the map earns the middle column. */
+.route__body { grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.2fr) minmax(0, 1fr); }
+/* The map gets the whole width: the nine sites of the old city sit inside a
+   quarter of it, and anything narrower turns them into one blob. */
+.route__map-panel { grid-column: 1 / -1; }
+@media (max-width: 1080px) { .route__body { grid-template-columns: minmax(0, 1fr); } }
+
+.route__field { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 8px; align-items: center; }
+.route__field span { font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-dim); }
+.route__field select,
+.route__field input {
+  width: 100%; padding: 5px 8px; font: inherit; font-size: 12px;
+  color: var(--ink); background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--edge); border-radius: 4px;
+}
+.route__field select:focus, .route__field input:focus { outline: none; border-color: var(--amber); }
+
+/* The frame, byte by byte. The header and the checksum are tinted apart from
+   the text because that is the whole distinction the era turns on: the nodes
+   in between only ever read the tinted ends. */
+.route__wire { display: flex; flex-wrap: wrap; gap: 3px; margin: 0; }
+.route__wire code {
+  padding: 2px 5px; border-radius: 3px; font-size: 11px;
+  color: var(--ink-dim); background: rgba(255, 255, 255, 0.04);
+}
+.route__wire code.is-head { color: #0b1114; background: var(--amber-soft); }
+.route__wire code.is-kind { color: var(--amber-soft); background: rgba(255, 179, 71, 0.18); }
+/* The codebook index and its value: solid for the id, tinted for the number it
+   introduces, so a reading reads as one thing of three bytes. */
+.route__wire code.is-id { color: #0b1114; background: var(--term); }
+.route__wire code.is-value { color: var(--term); background: rgba(126, 214, 190, 0.16); }
+.route__wire code.is-sum { color: #ff6a5a; background: rgba(255, 106, 90, 0.16); }
+
+/* What the packing bought, in the only unit the line charges in. */
+.route__saving { margin: 0; font-size: 11.5px; color: var(--ink-dim); }
+.route__saving strong { color: var(--amber-soft); font-weight: 600; }
+.route__saving span { text-decoration: line-through; opacity: 0.7; }
+.route__written { margin: 0; font-size: 11px; font-style: italic; color: rgba(164, 179, 186, 0.55); }
+
+.route__reading { grid-template-columns: 74px minmax(0, 1fr) 34px; }
+.route__reading em { font-size: 10.5px; font-style: normal; color: var(--ink-dim); }
+
+.route__map {
+  width: 100%; height: auto; border-radius: 6px;
+  background: rgba(0, 0, 0, 0.24); border: 1px solid var(--edge);
+}
+.route__line { stroke: rgba(164, 179, 186, 0.28); stroke-width: 1.2; }
+.route__line.is-down { stroke: #ff6a5a; stroke-width: 1.2; stroke-dasharray: 3 4; }
+.route__line.is-live { stroke: var(--amber); stroke-width: 2.4; }
+/* The route the tables picked, under the circuits: it is not a link of its
+   own, it is which links today's tables happen to agree on. */
+.route__chosen { stroke: rgba(255, 179, 71, 0.32); stroke-width: 4; stroke-linecap: round; }
+.route__site circle { fill: #0b1114; stroke: rgba(164, 179, 186, 0.55); stroke-width: 1.4; }
+.route__site text { font-size: 8.5px; fill: rgba(164, 179, 186, 0.6); text-anchor: middle; }
+.route__site.is-from circle, .route__site.is-to circle { stroke: var(--term); fill: rgba(126, 214, 190, 0.2); }
+.route__site.is-from text, .route__site.is-to text { fill: var(--term); }
+.route__site.is-here circle { stroke: var(--amber); fill: rgba(255, 179, 71, 0.25); }
+.route__site.is-here text { fill: var(--amber-soft); }
+/* The packet moves by transition rather than by animation frames: the duration
+   is the same number the step is held for, so the dot is never ahead of or
+   behind the step being described beside it. */
+.route__packet { transition-property: transform; transition-timing-function: linear; }
+.route__packet circle { fill: var(--amber); stroke: #0b1114; stroke-width: 1.2; }
+
+.route__steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+.route__steps li {
+  display: grid; grid-template-columns: 82px minmax(0, 1fr) 62px; gap: 8px;
+  padding: 2px 6px; border-radius: 3px; font-size: 11.5px; color: rgba(164, 179, 186, 0.5);
+}
+.route__steps li.is-past { color: var(--ink-dim); }
+.route__steps li.is-at {
+  background: rgba(255, 179, 71, 0.14); color: var(--ink); box-shadow: inset 2px 0 0 var(--amber);
+}
+.route__at { color: var(--term); }
+.route__what { min-width: 0; }
+.route__cost { text-align: right; font-variant-numeric: tabular-nums; }
+
+.route__table { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; font-size: 11px; }
+.route__table li {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 32px; gap: 6px;
+  padding: 2px 6px; border-radius: 3px; color: var(--ink-dim);
+}
+.route__table li.is-head { font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(164, 179, 186, 0.45); }
+.route__table li.is-on { background: rgba(126, 214, 190, 0.14); color: var(--ink); box-shadow: inset 2px 0 0 var(--term); }
+.route__table span { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Two bars in one: the line, which every machine pays the same, and the
+   thinking, which is the only thing that differs. Linear, not logarithmic —
+   here the two parts have to be comparable to each other. */
+.route .sim__race-bar { display: flex; }
+.route .sim__race-bar span.route__bar-line { background: var(--term); opacity: 0.8; }
+.route .sim__race-bar span.route__bar-think { background: var(--amber); opacity: 0.95; }
+
+.route__cuts { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+.route__cut {
+  width: 100%; padding: 2px 5px; font: inherit; font-size: 10px; text-align: left; cursor: pointer;
+  color: var(--ink-dim); background: transparent; border: 1px solid var(--edge); border-radius: 3px;
+}
+.route__cut:hover { border-color: var(--amber); }
+.route__cut.is-down { color: #ff6a5a; border-color: rgba(255, 106, 90, 0.5); text-decoration: line-through; }
+
+/* --- the chapter's errand -------------------------------------------------
+   One message crossing the region, once per era. Sits over the era backdrop
+   like the briefing cards do, and is the same shape in every chapter so the
+   only thing a reader notices changing is the number at the end. */
+.relay {
+  position: absolute; inset: 0; z-index: 3;
+  /* Red at the first era, green at the last; set per-era in EraRelay.tsx. */
+  --relay-accent: var(--amber);
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto;
+  /* Clears the story bar, which sits above every overlay so the era jumper
+     stays reachable while a chapter is playing. */
+  gap: 10px; padding: 52px 22px 26px;
+  background: linear-gradient(180deg, rgba(8, 13, 16, 0.82) 0%, rgba(8, 13, 16, 0.92) 100%);
+}
+.relay__bar { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin: 0; }
+.relay__era {
+  margin: 0; font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--term);
+}
+.relay__era span { opacity: 0.5; }
+.relay__carrier { margin: 0; font-size: 12.5px; color: var(--amber-soft); }
+.relay__skip { margin-left: auto; }
+
+/* The map and, over it, the line being said. The camera always parks the place
+   in question dead centre, so centre of this box is centre of that node. */
+.relay__stage { position: relative; min-height: 0; }
+.relay__map { width: 100%; height: 100%; min-height: 0; }
+/* The camera. A transform transition rather than an animation, so the pan and
+   the message it is following run off one clock and cannot drift apart. */
+.relay__camera { transition-property: transform; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
+.relay__road { stroke: rgba(164, 179, 186, 0.16); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.relay__leg { stroke: rgba(164, 179, 186, 0.3); stroke-width: 1.6; vector-effect: non-scaling-stroke; }
+.relay__leg.is-crossed { stroke: var(--relay-accent); stroke-width: 2.6; }
+.relay__site circle { fill: #0b1114; stroke: rgba(164, 179, 186, 0.35); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.relay__site text { font-size: 8px; fill: transparent; text-anchor: middle; transition: fill 300ms; }
+.relay__site.is-on circle { stroke: rgba(164, 179, 186, 0.7); }
+.relay__site.is-on text { fill: rgba(164, 179, 186, 0.65); }
+.relay__site.is-past circle { stroke: var(--relay-accent); fill: color-mix(in srgb, var(--relay-accent) 22%, transparent); }
+.relay__site.is-past text { fill: color-mix(in srgb, var(--relay-accent) 82%, white); }
+.relay__site.is-here circle { stroke: var(--relay-accent); fill: var(--relay-accent); }
+.relay__site.is-here text { fill: color-mix(in srgb, var(--relay-accent) 88%, white); }
+.relay__message { transition-property: transform; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
+.relay__message circle { fill: var(--relay-accent); stroke: #0b1114; stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+
+.relay__caption {
+  display: flex; align-items: baseline; justify-content: flex-end; gap: 14px; margin: 0;
+  font-size: 14px; color: var(--ink);
+}
+/* Centre-top: the era's label and objective. The reader's eye starts here, so
+   this is where the "what am I building" belongs; it fades out for the verdict. */
+.relay__intro {
+  position: absolute; top: 84px; left: 50%; transform: translateX(-50%); z-index: 2;
+  width: min(62ch, 82%); text-align: center; pointer-events: none;
+  transition: opacity 450ms ease;
+}
+.relay.is-done .relay__intro { opacity: 0; }
+.relay__intro-label {
+  margin: 0 0 7px; font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--relay-accent);
+}
+.relay__intro-obj {
+  margin: 0; font-size: 15.5px; line-height: 1.55; color: var(--ink);
+  text-shadow: 0 1px 3px #080d10, 0 0 16px #080d10;
+}
+
+/* On the node, not under the map: the reader is watching the dot move. The line
+   types itself out a character at a time and rides in with the message. */
+.relay__said {
+  /* Anchored by its bottom edge above the centre, so a 2-line caption grows
+     upwards and never lands on the place name the map draws over the dot. */
+  position: absolute; left: 50%; bottom: 50%; margin: 0 0 62px; z-index: 1;
+  transform: translateX(-50%);
+  max-width: min(44ch, 84%); text-align: center;
+  font-size: 14px; line-height: 1.5; color: var(--ink);
+  text-shadow: 0 1px 3px #080d10, 0 0 14px #080d10, 0 0 28px rgba(8, 13, 16, 0.9);
+  pointer-events: none;
+  animation: relay-say 260ms ease-out both;
+}
+@keyframes relay-say {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+/* The blinking cursor at the head of the typed line. */
+.relay__caret {
+  display: inline-block; width: 0.5em; height: 1.05em; margin-left: 1px;
+  vertical-align: -0.16em; background: var(--relay-accent);
+  animation: relay-caret 900ms steps(1) infinite;
+}
+@keyframes relay-caret { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .relay__said { animation: none; opacity: 1; }
+  .relay__caret { animation: none; }
+}
+.relay__clock {
+  font-variant-numeric: tabular-nums;
+  font-size: 12px; letter-spacing: 0.08em; color: var(--amber-soft);
+}
+
+/* The screen fades to black before the verdict, over the map and everything
+   else, so the number arrives on an empty field. */
+.relay__fade {
+  position: absolute; inset: 0; z-index: 4; background: #05080a;
+  opacity: 0; pointer-events: none; transition: opacity 650ms ease;
+}
+.relay__fade.is-on { opacity: 1; }
+
+/* The verdict, dead centre on the black. The number is the whole card: it is
+   what the reader carries into the chapter, and what the next chapter halves. */
+.relay__verdict {
+  position: absolute; inset: 0; z-index: 5;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; text-align: center; padding: 0 22px;
+  opacity: 0; animation: relay-reveal 650ms ease 620ms both;
+}
+@keyframes relay-reveal {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.relay__arrives { margin: 0; font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-dim); }
+.relay__number { display: flex; align-items: baseline; justify-content: center; gap: 10px; margin: 0; }
+.relay__number strong {
+  font-size: 72px; line-height: 1; font-weight: 600; color: var(--relay-accent);
+  font-variant-numeric: tabular-nums;
+}
+.relay__number span { font-size: 16px; letter-spacing: 0.12em; text-transform: uppercase; color: color-mix(in srgb, var(--relay-accent) 80%, white); }
+.relay__upshot { margin: 4px 0 6px; max-width: 52ch; font-size: 13.5px; line-height: 1.6; color: var(--ink-dim); }

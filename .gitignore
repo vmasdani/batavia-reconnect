@@ -21,3 +21,6 @@ package-lock.json
 
 # Cached DEM tiles from `npm run bake`. Re-downloadable, and binary.
 tools/.dem-cache/
+
+# graphify knowledge graph (generated)
+graphify-out/

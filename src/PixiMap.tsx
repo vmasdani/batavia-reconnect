@@ -11,11 +11,13 @@ import {
   Application, Assets, Container, Graphics, Sprite, Text, Texture,
   type FederatedPointerEvent,
 } from 'pixi.js'
-import { isoToScreen, pickTile, depthOf, TILE_W, TILE_H } from './iso'
+import { isoToScreen, pickTile, depthOf, TILE_W, TILE_H, type Point } from './iso'
 import { bakeArt, MAST_PX_PER_M, type Baked } from './art'
 import { useGame, crewNow, reachableFrom } from './store'
-import { fireLinks, fireSite } from './era0'
-import { PROVINCE_NAMES, type Link, type Settlement, type World } from './world'
+import {
+  GOAL, RELAY_WAIT, contactOf, fireLinks, fireSite, hasBoard, messageRoute, walkDays,
+} from './era0'
+import { PROVINCE_NAMES, ROADS, type Link, type Settlement, type World } from './world'
 import type { Move } from './sim'
 import truckSE from '../assets/truck/truck-se.png'
 import truckSW from '../assets/truck/truck-sw.png'
@@ -416,45 +418,302 @@ export function PixiMap() {
       const wireGraphics = new Graphics()
       wires.addChild(wireGraphics)
 
-      const packets: Array<{ sprite: Graphics; from: Site; to: Site; t: number; speed: number }> = []
+      /**
+       * Something in transit, drawn where it has got to: an Era 1 packet on a
+       * radio link, or an Era 0 envelope walking a road.
+       *
+       * One list for both, because they are the same idea and the frame loop
+       * should move everything in one pass. What separates them is the path —
+       * two points at mast height for a circuit, a dozen along the ground for
+       * a road — and whether the thing comes back, which a courier does and a
+       * radio packet does not.
+       */
+      interface Packet {
+        /** Which era put it here, so each era can clear only its own. */
+        era: 0 | 1
+        sprite: Container
+        path: Point[]
+        /** Distance from the start to each point. The last entry is the total. */
+        run: number[]
+        /** Fractions of the path covered per second. */
+        speed: number
+        /** Turn round at the ends instead of wrapping. */
+        bounce: boolean
+        t: number
+        dir: 1 | -1
+        /** Seconds spent standing at the start end and the far end. */
+        dwell: [number, number]
+        wait: number
+        /** Counter-scale with the camera, for a glyph that must stay readable. */
+        counter: boolean
+      }
+      const packets: Packet[] = []
 
-      // --- Era 0 signals -----------------------------------------------------
-      // Boards and fires are the only thing this era builds, and a fire is
-      // worth exactly what it can see, so the sight lines are drawn on the
-      // ground they were worked out from. Nothing here runs in Era 1.
+      /**
+       * Pixels a radio packet covers in a second.
+       *
+       * Far quicker than a courier and still slow enough to follow: the point
+       * of watching it is the route it takes, not the speed of light.
+       */
+      const SIGNAL_PACE = 260
+
+      /** Distance from the start of a path to each of its points. */
+      const runOf = (path: Point[]) => {
+        const run = [0]
+        for (let i = 1; i < path.length; i++) {
+          run.push(run[i - 1] + Math.hypot(path[i].x - path[i - 1].x, path[i].y - path[i - 1].y))
+        }
+        return run
+      }
+
+      /** Where a fraction of the way along a path lands, in screen space. */
+      const pointAlong = (path: Point[], run: number[], t: number): Point => {
+        const total = run[run.length - 1]
+        if (total === 0) return path[0]
+        const want = total * Math.min(1, Math.max(0, t))
+        let i = 1
+        while (i < run.length - 1 && run[i] < want) i++
+        const span = run[i] - run[i - 1] || 1
+        const f = (want - run[i - 1]) / span
+        return {
+          x: path[i - 1].x + (path[i].x - path[i - 1].x) * f,
+          y: path[i - 1].y + (path[i].y - path[i - 1].y) * f,
+        }
+      }
+
+      /** Take one era's packets off the map. The other era's stay where they are. */
+      const dropPackets = (era: 0 | 1) => {
+        for (let i = packets.length - 1; i >= 0; i--) {
+          if (packets[i].era !== era) continue
+          packets[i].sprite.destroy()
+          packets.splice(i, 1)
+        }
+      }
+
+      /**
+       * A letter in somebody's hand.
+       *
+       * Drawn rather than sprited because there are at most a dozen of them and
+       * they have to stay crisp through the whole zoom range, which a baked
+       * texture at region zoom does not.
+       */
+      const envelope = (size: number) => {
+        const g = new Graphics()
+        const w = size
+        const h = size * 0.68
+        const ink = Math.max(1, size * 0.12)
+        g.rect(-w / 2, -h / 2, w, h).fill({ color: 0xf3e7c8 }).stroke({ width: ink, color: 0x2a1207 })
+        g.moveTo(-w / 2, -h / 2)
+          .lineTo(0, h * 0.16)
+          .lineTo(w / 2, -h / 2)
+          .stroke({ width: ink, color: 0x2a1207 })
+        return g
+      }
+
+      // --- Era 0: the network, and what moves on it --------------------------
+      // Era 0's whole achievement is a graph — roads between settlements that
+      // are talking — and until it is drawn, a settlement that answers looks
+      // exactly like one that does not. So the roads are drawn by what they can
+      // carry, and a courier walks each one that carries anything, at the speed
+      // the distance actually costs. Nothing here runs in Era 1.
       const signalGraphics = new Graphics()
       wires.addChild(signalGraphics)
+      /** Redrawn every frame: the flash running a fire's sight line. */
+      const beamGraphics = new Graphics()
+      wires.addChild(beamGraphics)
+
+      /**
+       * How long one day of walking takes to watch.
+       *
+       * Slow. A courier is the slow thing in this era and the map should feel
+       * that — and it sets the wait at a gate with no board too, so a board
+       * being worth having is something the player can see rather than read.
+       */
+      const DAY_SECONDS = 3.4
 
       /** Screen point of the hill each settlement would lay its fire on. */
-      const firePoints = new Map<string, { x: number; y: number }>()
+      const firePoints = new Map<string, Point>()
       for (const s of world.settlements) {
         const hill = fireSite(world, s)
         firePoints.set(s.id, isoToScreen(hill.tx, hill.ty, world.at(hill.tx, hill.ty)?.elev ?? 0))
       }
 
-      const drawSignals = () => {
+      /**
+       * Each road, as points on the screen.
+       *
+       * `carveRoads` lays a road down by interpolating in tile space, so the
+       * road is sampled the same way and every sample lifted onto the elevation
+       * of the tile under it. The line then rides the ground the way the road
+       * does instead of cutting a chord through the hill it goes around — and
+       * the courier that walks it is on the line the player can see.
+       */
+      const roadKey = (a: string, b: string) => `${a}>${b}`
+      const roadPaths = new Map<string, Point[]>()
+      for (const [a, b] of ROADS) {
+        const from = world.settlements.find((s) => s.id === a)
+        const to = world.settlements.find((s) => s.id === b)
+        if (!from || !to) continue
+        const steps = Math.max(6, Math.ceil(Math.hypot(to.tx - from.tx, to.ty - from.ty) / 2))
+        const points: Point[] = []
+        for (let i = 0; i <= steps; i++) {
+          const t = i / steps
+          const tx = from.tx + (to.tx - from.tx) * t
+          const ty = from.ty + (to.ty - from.ty) * t
+          points.push(isoToScreen(tx, ty, world.at(Math.round(tx), Math.round(ty))?.elev ?? 0))
+        }
+        roadPaths.set(roadKey(a, b), points)
+      }
+
+      /** The road between two settlements, in the order asked for. */
+      const roadBetween = (a: string, b: string): Point[] | null => {
+        const forward = roadPaths.get(roadKey(a, b))
+        if (forward) return forward
+        const back = roadPaths.get(roadKey(b, a))
+        return back ? [...back].reverse() : null
+      }
+
+      const strokePath = (g: Graphics, path: Point[], style: Parameters<Graphics['stroke']>[0]) => {
+        g.moveTo(path[0].x, path[0].y)
+        for (let i = 1; i < path.length; i++) g.lineTo(path[i].x, path[i].y)
+        g.stroke(style)
+      }
+
+      /** Hand-stepped dashes along a path. Pixi has no dashed stroke. */
+      const dashPath = (
+        g: Graphics,
+        path: Point[],
+        run: number[],
+        style: Parameters<Graphics['stroke']>[0],
+      ) => {
+        const total = run[run.length - 1]
+        const steps = Math.max(2, Math.floor(total / (13 * strokeScale)))
+        for (let i = 0; i < steps; i += 2) {
+          const a = pointAlong(path, run, i / steps)
+          const b = pointAlong(path, run, Math.min(1, (i + 1) / steps))
+          g.moveTo(a.x, a.y).lineTo(b.x, b.y).stroke(style)
+        }
+      }
+
+      /**
+       * Pixels a courier covers in a second.
+       *
+       * `walkDays` rounds to whole days, so one 1-day road can be twice the
+       * length of another and a courier given the same time for each would be
+       * sprinting the long one. A courier walks at a courier's pace and the
+       * length of the road decides how long that takes — so the pace is worked
+       * out once, over the whole network, and every leg runs at it.
+       */
+      const COURIER_PACE = (() => {
+        let pixels = 0
+        let days = 0
+        for (const [a, b] of ROADS) {
+          const path = roadPaths.get(roadKey(a, b))
+          if (!path) continue
+          pixels += runOf(path)[path.length - 1]
+          days += Math.max(1, walkDays(world, a, b))
+        }
+        return days > 0 ? pixels / days / DAY_SECONDS : 60
+      })()
+
+      /**
+       * Somebody handing a message over: a ring where a courier arrived.
+       *
+       * A courier that turned round on the spot read as one runner pacing back
+       * and forth. Arriving, marking the handover and going is what actually
+       * happens — the message is left, and whoever carries it on is not the
+       * person who brought it.
+       */
+      const blips: Array<{ at: Point; life: number }> = []
+
+      /** Lit fires that can see each other. The frame loop flashes along these. */
+      let fireBeams: Array<{ from: Point; to: Point }> = []
+
+      /**
+       * Where a fire is burning, for the frame loop to put smoke over.
+       *
+       * A fire is the only thing in this era that has to be *watched* — a
+       * village posts somebody on the hill to sit with it — and a static flame
+       * on a still hillside does not read as burning. The smoke is what says
+       * somebody is up there keeping it alight.
+       */
+      let litFires: Point[] = []
+
+      /**
+       * The letter to Tangerang, where it has got to today.
+       *
+       * It moves a day at a time rather than continuously, because that is how
+       * it moves: the day loop advances it and nothing happens to it in between.
+       */
+      let letterToken: { sprite: Container; base: Point } | null = null
+
+      const drawEra0 = () => {
         signalGraphics.clear()
+        beamGraphics.clear()
+        dropPackets(0)
+        fireBeams = []
+        litFires = []
+        letterToken?.sprite.destroy()
+        letterToken = null
+
         const { era, survey } = useGame.getState()
         if (era !== 0) return
 
+        // --- roads, drawn by what they can carry ---
+        for (const [a, b] of ROADS) {
+          const path = roadPaths.get(roadKey(a, b))
+          if (!path) continue
+          // A road to somewhere nobody has walked to is not on the map. Drawing
+          // the whole graph on day 1 would hand the player the region they are
+          // meant to earn by crossing it.
+          if (contactOf(survey, a) === 'unknown' || contactOf(survey, b) === 'unknown') continue
+          const run = runOf(path)
+          const live = contactOf(survey, a) === 'talking' && contactOf(survey, b) === 'talking'
+          if (!live) {
+            // Known, and carrying nothing: it has been walked, but there is
+            // nobody at one end of it who would pass a message on.
+            dashPath(signalGraphics, path, run, { width: 2.2 * strokeScale, color: 0x9dc6db, alpha: 0.45 })
+            continue
+          }
+          strokePath(signalGraphics, path, { width: 5 * strokeScale, color: 0xffb347, alpha: 0.12 })
+          strokePath(signalGraphics, path, { width: 1.6 * strokeScale, color: 0xffd9a0, alpha: 0.85 })
+
+          // A courier on it, at the region's walking pace, standing at each gate
+          // that has no board for as long as a message would wait there. That
+          // pause is the only explanation a notice board needs.
+          const sprite = envelope(9)
+          wires.addChild(sprite)
+          packets.push({
+            era: 0,
+            sprite,
+            path,
+            run,
+            speed: COURIER_PACE / Math.max(1, run[run.length - 1]),
+            bounce: true,
+            t: 0,
+            dir: 1,
+            dwell: [
+              hasBoard(survey, a) ? 0 : RELAY_WAIT * DAY_SECONDS,
+              hasBoard(survey, b) ? 0 : RELAY_WAIT * DAY_SECONDS,
+            ],
+            wait: 0,
+            counter: true,
+          })
+        }
+
+        // --- fires ---
         for (const [a, b] of fireLinks(world, survey)) {
           const from = firePoints.get(a)
           const to = firePoints.get(b)
           if (!from || !to) continue
-          const steps = Math.max(4, Math.floor(Math.hypot(to.x - from.x, to.y - from.y) / (11 * strokeScale)))
-          for (let i = 0; i < steps; i += 2) {
-            const t0 = i / steps
-            const t1 = Math.min(1, (i + 1) / steps)
-            signalGraphics
-              .moveTo(from.x + (to.x - from.x) * t0, from.y + (to.y - from.y) * t0)
-              .lineTo(from.x + (to.x - from.x) * t1, from.y + (to.y - from.y) * t1)
-              .stroke({ width: 1.6 * strokeScale, color: 0xff9d4a, alpha: 0.6 })
-          }
+          const path = [from, to]
+          dashPath(signalGraphics, path, runOf(path), { width: 1.6 * strokeScale, color: 0xff9d4a, alpha: 0.55 })
+          fireBeams.push({ from, to })
         }
 
         for (const id of survey.fires) {
           const at = firePoints.get(id)
           if (!at) continue
+          litFires.push(at)
           // A fire stands on the real high ground above its village, which can
           // be 4 kilometres out and lands well away from the settlement art —
           // sometimes nearer a neighbour's. This thin stalk says whose it is.
@@ -473,6 +732,7 @@ export function PixiMap() {
             .stroke({ width: 1.4 * strokeScale, color: 0x2a1207 })
         }
 
+        // --- boards ---
         for (const id of survey.boards) {
           const site = sites.get(id)
           if (!site) continue
@@ -488,6 +748,42 @@ export function PixiMap() {
             .stroke({ width: 1.2 * strokeScale, color: 0x2a1207 })
           signalGraphics.moveTo(x, y).lineTo(x, y + w).stroke({ width: 1.6 * strokeScale, color: 0x2a1207 })
         }
+
+        // --- the letter ---
+        // The era ends on this and nothing else says where it is.
+        const letter = survey.letter
+        if (letter.state !== 'out' && letter.state !== 'back') return
+        const route = messageRoute(world, survey, GOAL)
+        if (!route || route.length < 2) return
+
+        const path: Point[] = []
+        for (let i = 1; i < route.length; i++) {
+          // Most hops are a road. One that is not is a fire link, where the far
+          // village walks out to meet ours: no road under that, so it is the
+          // straight line between the two of them.
+          const road = roadBetween(route[i - 1], route[i])
+          const ends = [sites.get(route[i - 1])?.ground, sites.get(route[i])?.ground]
+          const leg = road ?? (ends[0] && ends[1] ? [ends[0], ends[1]] : [])
+          for (const point of leg) {
+            const last = path[path.length - 1]
+            if (!last || last.x !== point.x || last.y !== point.y) path.push(point)
+          }
+        }
+        if (path.length < 2) return
+
+        const left = letter.state === 'out' ? letter.sentOn : letter.leftOn
+        const span = Math.max(1, letter.due - left)
+        const done = Math.min(1, Math.max(0, (survey.day - left) / span))
+        const at = pointAlong(path, runOf(path), letter.state === 'out' ? done : 1 - done)
+
+        const sprite = new Container()
+        const halo = new Graphics()
+        halo.circle(0, 0, 13).fill({ color: 0x8fe8d0, alpha: 0.18 })
+        halo.circle(0, 0, 13).stroke({ width: 1.4, color: 0x8fe8d0, alpha: 0.55 })
+        sprite.addChild(halo, envelope(16))
+        sprite.position.set(at.x, at.y)
+        wires.addChild(sprite)
+        letterToken = { sprite, base: at }
       }
 
       /**
@@ -502,8 +798,7 @@ export function PixiMap() {
 
       const drawLinks = (links: Link[]) => {
         wireGraphics.clear()
-        for (const packet of packets) packet.sprite.destroy()
-        packets.length = 0
+        dropPackets(1)
 
         for (const link of links) {
           const a = sites.get(link.from)
@@ -522,7 +817,25 @@ export function PixiMap() {
             dot.circle(0, 0, 2.6).fill(0xfff2d0)
             dot.circle(0, 0, 5).fill({ color: 0xffb347, alpha: 0.28 })
             wires.addChild(dot)
-            packets.push({ sprite: dot, from: a, to: b, t: Math.random(), speed: 0.055 + Math.random() * 0.03 })
+            // Mast to mast, in a straight line: a radio wave does not follow a
+            // road. It runs at one pace whatever the length of the hop, marks
+            // the far end as it lands, and comes straight back — a circuit is
+            // two-way, and a link nobody answers on is not a link.
+            const hop = [{ x: ax, y: ay }, { x: bx, y: by }]
+            const run = runOf(hop)
+            packets.push({
+              era: 1,
+              sprite: dot,
+              path: hop,
+              run,
+              speed: SIGNAL_PACE / Math.max(1, run[run.length - 1]),
+              bounce: true,
+              t: Math.random(),
+              dir: 1,
+              dwell: [0, 0],
+              wait: 0,
+              counter: false,
+            })
           } else if (link.status === 'planned') {
             // A surveyed route is the player's whole to-do list — Serang,
             // Depok, Bogor are all only this line — so it carries the same
@@ -871,7 +1184,7 @@ export function PixiMap() {
       // it are redrawn at the weight that fit calls for.
       strokeScale = strokeScaleFor(startZoom)
       drawLinks(world.links)
-      drawSignals()
+      drawEra0()
 
 
       // --- crew markers ------------------------------------------------------
@@ -1155,7 +1468,7 @@ export function PixiMap() {
         if (Math.abs(wanted - strokeScale) > 0.01) {
           strokeScale = wanted
           drawLinks(useGame.getState().world.links)
-          drawSignals()
+          drawEra0()
           drawPlans()
         }
       }
@@ -1164,16 +1477,6 @@ export function PixiMap() {
       // --- frame loop --------------------------------------------------------
       app.ticker.add((ticker) => {
         const dt = ticker.deltaMS / 1000
-
-        for (const packet of packets) {
-          packet.t += dt * packet.speed
-          if (packet.t > 1) packet.t -= 1
-          const eased = packet.t
-          packet.sprite.position.set(
-            packet.from.ground.x + (packet.to.ground.x - packet.from.ground.x) * eased,
-            packet.from.beacon + (packet.to.beacon - packet.from.beacon) * eased,
-          )
-        }
 
         // Counter-scale labels so they stay readable as the camera pulls back,
         // clamped so they do not swamp the map at the far end of the zoom range.
@@ -1224,6 +1527,94 @@ export function PixiMap() {
           label.visible = camera.scale.x > 0.45
         }
 
+        // Everything in transit, in one pass. A courier that has arrived
+        // somewhere with no board stands there until its dwell runs out, which
+        // is the two days a message waits at a gate for the next runner going
+        // the right way.
+        for (const packet of packets) {
+          if (packet.wait > 0) {
+            packet.wait -= dt
+          } else {
+            packet.t += dt * packet.speed * packet.dir
+            if (packet.t >= 1) {
+              if (!packet.bounce) packet.t -= 1
+              else {
+                packet.t = 1
+                packet.dir = -1
+                packet.wait = packet.dwell[1]
+                blips.push({ at: packet.path[packet.path.length - 1], life: 0 })
+              }
+            } else if (packet.t <= 0 && packet.dir === -1) {
+              packet.t = 0
+              packet.dir = 1
+              packet.wait = packet.dwell[0]
+              blips.push({ at: packet.path[0], life: 0 })
+            }
+          }
+          // Gone while it is being handed over, so nothing is seen walking
+          // backwards: the runner who takes it on is a different runner.
+          packet.sprite.visible = packet.wait <= 0
+          const at = pointAlong(packet.path, packet.run, packet.t)
+          packet.sprite.position.set(at.x, at.y)
+          if (packet.counter) packet.sprite.scale.set(labelScale)
+        }
+
+        // A fire says one thing and says it at the speed of light. Drawn as a
+        // band running the sight line, next to a courier crawling the road it
+        // parallels: that contrast is the whole of what Era 0 is teaching.
+        beamGraphics.clear()
+
+        // Smoke off every lit fire. Three puffs per fire, offset by the hill's
+        // own position so no two fires in view pulse together, and driven off
+        // the clock rather than kept as state — there is nothing here worth
+        // remembering between frames.
+        for (const fire of litFires) {
+          const flicker = 0.8 + Math.sin(ticker.lastTime / 130 + fire.x) * 0.2
+          beamGraphics
+            .circle(fire.x, fire.y - 3 * strokeScale, 9 * strokeScale * flicker)
+            .fill({ color: 0xffb347, alpha: 0.22 * flicker })
+          for (let i = 0; i < 3; i++) {
+            const phase = (ticker.lastTime / 2600 + i / 3 + fire.x * 0.017) % 1
+            const rise = phase * 38 * strokeScale
+            const drift = Math.sin(phase * 3.4 + i * 2) * 8 * strokeScale
+            beamGraphics
+              .circle(fire.x + drift, fire.y - 12 * strokeScale - rise, (2.4 + phase * 6) * strokeScale)
+              .fill({ color: 0xb9c2c8, alpha: 0.3 * (1 - phase) * (phase < 0.12 ? phase / 0.12 : 1) })
+          }
+        }
+
+        for (let i = blips.length - 1; i >= 0; i--) {
+          const blip = blips[i]
+          blip.life += dt / 0.5
+          if (blip.life >= 1) {
+            blips.splice(i, 1)
+            continue
+          }
+          const r = (3 + blip.life * 9) * strokeScale
+          beamGraphics
+            .circle(blip.at.x, blip.at.y, r)
+            .stroke({ width: 1.8 * strokeScale, color: 0xffe3a8, alpha: 1 - blip.life })
+        }
+        if (fireBeams.length > 0) {
+          const u = (ticker.lastTime / 1500) % 1
+          const head = Math.min(1, u * 1.25)
+          const tail = Math.max(0, head - 0.18)
+          const fade = Math.sin(Math.PI * Math.min(1, u * 1.25))
+          for (const beam of fireBeams) {
+            const a = { x: beam.from.x + (beam.to.x - beam.from.x) * tail, y: beam.from.y + (beam.to.y - beam.from.y) * tail }
+            const b = { x: beam.from.x + (beam.to.x - beam.from.x) * head, y: beam.from.y + (beam.to.y - beam.from.y) * head }
+            beamGraphics.moveTo(a.x, a.y).lineTo(b.x, b.y).stroke({ width: 5 * strokeScale, color: 0xffc978, alpha: 0.2 * fade })
+            beamGraphics.moveTo(a.x, a.y).lineTo(b.x, b.y).stroke({ width: 2 * strokeScale, color: 0xfff2d0, alpha: 0.9 * fade })
+          }
+        }
+
+        // The letter only moves once a day, so it bobs: without it, the one
+        // object the era is actually about sits dead still on a moving map.
+        if (letterToken) {
+          letterToken.sprite.position.y = letterToken.base.y + Math.sin(ticker.lastTime / 380) * 3
+          letterToken.sprite.scale.set(labelScale)
+        }
+
         // A slow bob marks a ruin that still has something in it.
         const bob = Math.sin(ticker.lastTime / 520)
         for (const marker of salvageMarkers) {
@@ -1253,7 +1644,7 @@ export function PixiMap() {
         // the plan overlay and its crew never re-park after a day.
         if (state.survey !== prev.survey) {
           syncCrew()
-          drawSignals()
+          drawEra0()
         }
         if (state.selectedId === prev.selectedId || !state.selectedId) return
         const site = sites.get(state.selectedId)
@@ -1264,6 +1655,17 @@ export function PixiMap() {
           app.screen.height / 2 + 40 - site.ground.y * z,
         )
       })
+
+      // What is on the map and whether it is moving — the two things a
+      // screenshot cannot answer, and the whole point of this layer. `?.` so
+      // the expression is substituted away in a build. See `tools/render`.
+      if (import.meta.env?.DEV) {
+        ;(window as unknown as { __mapDebug?: () => unknown }).__mapDebug = () => ({
+          packets: packets.map((p) => ({ era: p.era, x: p.sprite.position.x, y: p.sprite.position.y, waiting: p.wait > 0 })),
+          beams: fireBeams.length,
+          letter: letterToken ? { x: letterToken.base.x, y: letterToken.base.y } : null,
+        })
+      }
 
       cleanup = () => {
         unsubscribe()

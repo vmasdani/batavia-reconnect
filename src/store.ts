@@ -18,15 +18,19 @@ import {
   handoff,
   newSurvey,
   order as orderSurvey,
+  parleySeats,
   resolveSurveyDay,
   sendLetter as postLetter,
   type Survey,
   type SurveyTask,
 } from './era0'
+import type { ParleyResult, ParleySeat } from './parley'
+import type { Tuning, TuningSeat } from './tuning'
 import {
   newSim,
   refreshLinks,
   resolveDay,
+  tuningSeats,
   taskOptions,
   assign,
   type Focus,
@@ -75,6 +79,37 @@ export interface Report {
   before?: { stock: Stock; kits: Kits }
 }
 
+/**
+ * The night, once every exchange at a gate has been settled.
+ *
+ * Era 0's day is resolved in one go, but the parleys inside it are played by
+ * hand, so the click that ends the day and the resolution of that day are not
+ * the same moment. Both paths land here with the same shape.
+ */
+function surveyNight(world: World, survey: Survey, results: Record<string, ParleyResult>) {
+  const { survey: next, moves } = resolveSurveyDay(world, survey, results)
+  const report: Report = { day: survey.day, log: next.log }
+  return moves.length === 0
+    ? { survey: next, report, playing: null, pending: null, parleys: [], parleyResults: {} }
+    : { survey: next, report: null, playing: moves, pending: report, parleys: [], parleyResults: {} }
+}
+
+/** The night, once every set going up tonight has been netted onto a channel. */
+function era1Night(world: World, sim: Sim, tunings: Record<string, Tuning>) {
+  const { moves, ...next } = resolveDay(world, sim, tunings)
+  const report: Report = {
+    day: sim.day,
+    log: next.sim.log,
+    before: { stock: { ...sim.stock }, kits: { ...sim.kits } },
+  }
+  // The report is what the player actually reads, so it is held in a dialog
+  // rather than scrolling past in a side panel — but not over the top of the
+  // day being driven out on the map.
+  return moves.length === 0
+    ? { ...next, report, playing: null, pending: null, tunings: [], tuned: {} }
+    : { ...next, report: null, playing: moves, pending: report, tunings: [], tuned: {} }
+}
+
 interface GameState {
   /**
    * Which era is loaded. The eras share this store because they share the
@@ -116,7 +151,30 @@ interface GameState {
    * Kept here rather than in `sim`/`survey` because it is about the screen
    * having been shown, not about anything the day loop resolves.
    */
-  opening: EraId | null
+  opening: number | null
+  /**
+   * Exchanges at a gate that are waiting to be played, head first.
+   *
+   * Era 0's day loop is a batch — three people can finish three different
+   * parleys on one click — so the conversations cannot be played from inside
+   * it. Ending the day fills this queue instead, the modal plays the head, and
+   * the day is resolved once the queue is empty. See `parleySeats`.
+   */
+  parleys: ParleySeat[]
+  /** What each of them came to, keyed by the crew member who was at the table. */
+  parleyResults: Record<string, ParleyResult>
+  settleParley: (result: ParleyResult) => void
+  /**
+   * Sets that go on the air tonight and are waiting to be netted, head first.
+   *
+   * Era 1's own version of the same queue, and for the same reason: more than
+   * one site can come up on a single click of End day, so the bench cannot be
+   * played from inside `resolveDay`. See `tuningSeats`.
+   */
+  tunings: TuningSeat[]
+  /** Where each bench was left, keyed by the crew member who was at the set. */
+  tuned: Record<string, Tuning>
+  settleTuning: (tuning: Tuning) => void
   enterEra: (era: EraId) => void
   /**
    * Take the prologue's end state into Era 1. Unlike `enterEra(1)`, which
@@ -139,6 +197,14 @@ interface GameState {
   openSkit: (scene: Scene) => void
   advanceSkit: () => void
   closeSkit: () => void
+  /**
+   * Show an era's chapter, primer and briefing without playing it.
+   *
+   * Eras 2 to 7 are written but not built. They still have a scene, and the
+   * technology each one is about is the point of the game, so the menu opens
+   * them the same way a playable era opens — and stops where the map would be.
+   */
+  readEra: (era: number) => void
   dismissOpening: () => void
 }
 
@@ -168,6 +234,10 @@ export const useGame = create<GameState>((set, get) => ({
   // Era 1 is what the page opens on, and its chapter should play the first
   // time it is looked at just as it does when it is chosen from the menu.
   opening: 1,
+  parleys: [],
+  parleyResults: {},
+  tunings: [],
+  tuned: {},
   // Selecting one kind of thing clears the others, so only one panel is open.
   select: (id) => set({ selectedId: id, selectedScavengeId: null, selectedCampId: null }),
   selectScavenge: (id) => set({ selectedScavengeId: id, selectedId: null, selectedCampId: null }),
@@ -195,6 +265,10 @@ export const useGame = create<GameState>((set, get) => ({
       skit: null,
       skitLine: 0,
       opening: era,
+      parleys: [],
+      parleyResults: {},
+      tunings: [],
+      tuned: {},
     })
   },
   carryIntoEra1: () => {
@@ -213,6 +287,10 @@ export const useGame = create<GameState>((set, get) => ({
       skit: null,
       skitLine: 0,
       opening: 1,
+      parleys: [],
+      parleyResults: {},
+      tunings: [],
+      tuned: {},
     })
   },
   sendLetter: () => set({ survey: postLetter(get().world, get().survey) }),
@@ -223,27 +301,47 @@ export const useGame = create<GameState>((set, get) => ({
   endDay: () => {
     const { era, world, sim, survey } = get()
     if (era === 0) {
-      const { survey: next, moves } = resolveSurveyDay(world, survey)
-      const report: Report = { day: survey.day, log: next.log }
-      if (moves.length === 0) set({ survey: next, report, playing: null, pending: null })
-      else set({ survey: next, report: null, playing: moves, pending: report })
+      // Anybody sitting down at a gate tonight is played before the day is,
+      // because the day cannot be resolved until it knows how those went.
+      const seats = parleySeats(world, survey)
+      if (seats.length > 0) return set({ parleys: seats, parleyResults: {} })
+      set(surveyNight(world, survey, {}))
       return
     }
-    const { moves, ...next } = resolveDay(world, sim)
-    const report: Report = {
-      day: sim.day,
-      log: next.sim.log,
-      before: { stock: { ...sim.stock }, kits: { ...sim.kits } },
-    }
-    // The report is what the player actually reads, so it is held in a dialog
-    // rather than scrolling past in a side panel — but not over the top of the
-    // day being driven out on the map.
-    if (moves.length === 0) set({ ...next, report, playing: null, pending: null })
-    else set({ ...next, report: null, playing: moves, pending: report })
+    // Anything going on the air tonight is netted before the day is resolved,
+    // because the day cannot derive a single circuit until it knows the band.
+    const seats = tuningSeats(world, sim)
+    if (seats.length > 0) return set({ tunings: seats, tuned: {} })
+    set(era1Night(world, sim, {}))
+  },
+  /** One bench is done. Run the next, or resolve the day. */
+  settleTuning: (tuning) => {
+    const { world, sim, tunings, tuned } = get()
+    const next = { ...tuned, [tuning.memberId]: tuning }
+    const rest = tunings.slice(1)
+    if (rest.length > 0) return set({ tunings: rest, tuned: next })
+    set(era1Night(world, sim, next))
+  },
+  /**
+   * One exchange is over. Play the next, or resolve the day.
+   *
+   * Rations promised at the first gate are taken off what the second gate can
+   * be offered: two people out talking on the same day are spending from one
+   * store, and a card the crew cannot actually deliver should not be on the
+   * table at the second gate.
+   */
+  settleParley: (result) => {
+    const { world, survey, parleys, parleyResults } = get()
+    const results = { ...parleyResults, [result.memberId]: result }
+    const spent = Object.values(results).reduce((sum, r) => sum + r.rationsSpent, 0)
+    const rest = parleys.slice(1).map((seat) => ({ ...seat, rations: Math.max(0, survey.rations - spent) }))
+    if (rest.length > 0) return set({ parleys: rest, parleyResults: results })
+    set(surveyNight(world, survey, results))
   },
   /** Called by the map once the last token is parked. */
   finishPlayback: () => set({ playing: null, report: get().pending, pending: null }),
   dismissReport: () => set({ report: null }),
+  readEra: (era) => set({ opening: era }),
   dismissOpening: () => set({ opening: null }),
   // The caller passes the scene rather than an id: Era 0's skits are
   // translated, so which text is being played is the caller's decision and not

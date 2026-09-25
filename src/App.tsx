@@ -14,6 +14,7 @@ import { PixiMap } from './PixiMap'
 import { useGame, reachableFrom, availableSkits } from './store'
 import { SkitChip, SkitOverlay } from './Skit'
 import { EraOpening } from './EraOpening'
+import { TuningBench } from './Tuning'
 import type { Lang } from './lang'
 import { PARTY, type PartyMember } from './party'
 import { useBacksound } from './useBacksound'
@@ -101,7 +102,7 @@ function taskText(task: Task, world: World): string {
     case 'scavenge': return `Stripping ${nameOf(task.target)}`
     case 'craft': return `Building a ${(RECIPE_NAME[task.recipe] ?? task.recipe).toLowerCase()}`
     case 'survey': return `Surveying ${nameOf(task.target)}`
-    case 'install': return `Raising the mast at ${nameOf(task.target)}`
+    case 'install': return `Raising the radio tower at ${nameOf(task.target)}`
     case 'commission': return `Keying up ${nameOf(task.target)}`
     case 'harden': return `Hardening ${nameOf(task.target)}`
     case 'repair': return `Tuning ${nameOf(task.target)}`
@@ -532,7 +533,7 @@ export default function App({ lang, onExit }: { lang: Lang; onExit: () => void }
   const camp = world.camps.find((c) => c.id === selectedCampId) ?? null
 
   const reachable = useMemo(() => reachableFrom(world, 'batavia'), [world])
-  const skits = useMemo(() => availableSkits(world, sim), [world, sim])
+  const skits = useMemo(() => availableSkits(world, sim, lang), [world, sim, lang])
   const selected = world.settlements.find((s) => s.id === selectedId) ?? null
   const byId = useMemo(() => new Map(world.settlements.map((s) => [s.id, s])), [world])
   const alerting = world.settlements.filter((s) => s.alert)
@@ -621,7 +622,7 @@ export default function App({ lang, onExit }: { lang: Lang; onExit: () => void }
       {selected && (
         <aside className={`hud hud--right${selected.alert ? ' is-alert' : ''}`}>
           <h2>{selected.name}</h2>
-          <p className="tier">{selected.tier} · {selected.mast} m mast</p>
+          <p className="tier">{selected.tier} · {selected.mast} m radio tower</p>
           <div className="stage">
             <Progress stage={selected.stage} size="lg" />
             <span className="stage__label">{STAGE_LABEL[selected.stage]}</span>
@@ -824,7 +825,7 @@ export default function App({ lang, onExit }: { lang: Lang; onExit: () => void }
           <span className="probe">
             {hoveredTile
               ? `tile ${hoveredTile.tx},${hoveredTile.ty} · ${hoveredTile.terrain} · elev ${hoveredTile.elev.toFixed(1)}`
-              : 'drag to pan · scroll to zoom · click a mast'}
+              : 'drag to pan · scroll to zoom · click a radio tower'}
           </span>
         </div>
       </footer>
@@ -839,6 +840,12 @@ export default function App({ lang, onExit }: { lang: Lang; onExit: () => void }
         />
       )}
       <ReportDialog />
+      {/*
+        The bench, run between the click that ends the day and the day being
+        resolved: a set cannot be on the air until it is on a channel, and the
+        report is written after it is.
+      */}
+      <TuningBench />
       <SkitOverlay />
       <EraOpening era={1} lang={lang} />
     </div>

@@ -13,6 +13,8 @@
  * and the scrim keeps the dialogue box readable over the busiest of them.
  */
 
+import { artFor } from './pixelart'
+
 const HORIZON = 620
 
 /** Flat fills, far to near, plus the one warm accent a scene is allowed. */
@@ -284,16 +286,69 @@ function FabAndMesh() {
   )
 }
 
-const SCENES = [DeadCity, FirstMast, CopperLine, Switchboard, GlassShed, CoreMemory, EmptyDrawer, FabAndMesh]
+/** 2048: racks of valves in a shed that is never dark, and a plugboard. */
+function CountingRoom() {
+  const racks = range(5).map((i) => 96 + i * 232)
+  return (
+    <>
+      <rect x="0" y="0" width="1440" height="900" fill={FAR} />
+      {racks.map((x) => (
+        <g key={x}>
+          <rect x={x} y="150" width="168" height="560" fill={MID} />
+          {range(7).map((r) =>
+            range(4).map((c) => (
+              <circle
+                key={`${r}-${c}`}
+                cx={x + 30 + c * 36}
+                cy={186 + r * 76}
+                r="11"
+                fill={HOT}
+                /* One dead valve per rack, and finding it is the whole year. */
+                opacity={(r * 4 + c) % 13 === 0 ? 0.12 : 0.62}
+              />
+            )),
+          )}
+        </g>
+      ))}
+      <rect x="0" y="700" width="1440" height="200" fill={NEAR} />
+      {/* The plugboard: the only place the machine is told anything. */}
+      <rect x="1010" y="470" width="330" height="240" fill={NEAR} />
+      <g stroke={HOT} strokeWidth="5" fill="none" opacity="0.7">
+        {range(6).map((i) => (
+          <path key={i} d={`M${1046 + i * 26} 512 q${34 + i * 12} ${86 + i * 16} ${112 - i * 8} 0`} />
+        ))}
+      </g>
+    </>
+  )
+}
+
+const SCENES = [DeadCity, FirstMast, CopperLine, Switchboard, GlassShed, CountingRoom, CoreMemory, EmptyDrawer, FabAndMesh]
 
 export function Backdrop({ era }: { era: number }) {
   const Scene = SCENES[era] ?? SCENES[0]
+  const photo = artFor(era)
   return (
-    <div className="backdrop" aria-hidden>
-      <svg className="backdrop__art" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
-        <Scene />
-      </svg>
-      <div className="backdrop__scrim" />
+    <div className="backdrop">
+      {/* The photograph when the era has one, and the drawn scene when it does
+          not. Both are decoration for text and neither is announced; the credit
+          under the photograph is the one part a reader may want, so it is the
+          one part not hidden from a screen reader. */}
+      {photo ? (
+        <img className="backdrop__photo" src={photo.src} alt="" aria-hidden />
+      ) : (
+        <svg className="backdrop__art" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden>
+          <Scene />
+        </svg>
+      )}
+      <div className="backdrop__scrim" aria-hidden />
+      {photo && (
+        <p className="backdrop__credit">
+          <a href={photo.page} target="_blank" rel="noreferrer noopener">
+            {photo.credit}
+          </a>
+          <span>{photo.license}</span>
+        </p>
+      )}
     </div>
   )
 }

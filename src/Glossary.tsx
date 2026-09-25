@@ -12,28 +12,51 @@
  * a glossary exists. `Root` provides it once, around everything.
  */
 
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
-import { findTerms, termsByEra, termsIn, type Term } from './glossary'
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { findTerms, termMap, termsByEra, termsIn, type Term } from './glossary'
+import { TechFigure, figureFor } from './figures'
+import { photoFor } from './photos'
 import { UI, type Lang } from './lang'
 
 interface GlossaryHandle {
   lang: Lang
   terms: Map<string, Term>
   open: (id: string) => void
+  hover: (id: string | null) => void
 }
 
 const GlossaryContext = createContext<GlossaryHandle | null>(null)
 
+/**
+ * Which term the pointer is resting on, kept apart from the handle above.
+ *
+ * Deliberately a second context. The handle has to stay identical from one
+ * render to the next — every marked-up word in the script reads it, and a word
+ * that re-renders on hover cannot also clean up after itself when it is taken
+ * away. The value that does change every hover is read by one component.
+ */
+const HoverContext = createContext<string | null>(null)
+
 export function GlossaryProvider({ lang, children }: { lang: Lang; children: ReactNode }) {
   const [openId, setOpenId] = useState<string | null>(null)
-  const terms = useMemo(() => new Map(termsIn(lang).map((t) => [t.id, t])), [lang])
-  const handle = useMemo<GlossaryHandle>(() => ({ lang, terms, open: setOpenId }), [lang, terms])
+  /**
+   * Which term the pointer is resting on.
+   *
+   * Held here rather than by the text that owns the word, because the thing
+   * that answers a hover — the photograph over the dialogue box — is nowhere
+   * near the word being hovered.
+   */
+  const [hovered, hover] = useState<string | null>(null)
+  const terms = termMap(lang)
+  const handle = useMemo<GlossaryHandle>(() => ({ lang, terms, open: setOpenId, hover }), [lang, terms])
   const showing = openId ? terms.get(openId) : undefined
 
   return (
     <GlossaryContext.Provider value={handle}>
-      {children}
-      {showing && <TermPanel term={showing} lang={lang} onClose={() => setOpenId(null)} />}
+      <HoverContext.Provider value={hovered}>
+        {children}
+        {showing && <TermPanel term={showing} lang={lang} onClose={() => setOpenId(null)} />}
+      </HoverContext.Provider>
     </GlossaryContext.Provider>
   )
 }
@@ -49,6 +72,12 @@ export function TermText({ text, upTo }: { text: string; upTo?: number }) {
   const glossary = useContext(GlossaryContext)
   const hits = useMemo(() => findTerms(text), [text])
   const end = upTo ?? text.length
+
+  // A word the pointer is resting on can be taken away underneath it — the
+  // dialogue player advances to the next line, and the button unmounts without
+  // ever firing a leave. Clearing when the text changes is the only way the
+  // hover ends, and without it the picture stays up over an unrelated line.
+  useEffect(() => () => glossary?.hover(null), [text, glossary])
 
   // No provider, or nothing to mark: the plain string, which is what every
   // caller rendered before this file existed.
@@ -66,6 +95,12 @@ export function TermText({ text, upTo }: { text: string; upTo?: number }) {
         type="button"
         className="term"
         title={glossary.terms.get(hit.id)?.name}
+        // Resting on the word puts the photograph up; clicking it opens the
+        // whole entry. Focus counts as hover so the keyboard sees it too.
+        onPointerEnter={() => glossary.hover(hit.id)}
+        onPointerLeave={() => glossary.hover(null)}
+        onFocus={() => glossary.hover(hit.id)}
+        onBlur={() => glossary.hover(null)}
         onClick={(event) => {
           // The dialogue player advances on a click anywhere in the box.
           event.stopPropagation()
@@ -81,12 +116,82 @@ export function TermText({ text, upTo }: { text: string; upTo?: number }) {
   return <>{parts}</>
 }
 
-/** What a term is, why the project needed it, and who did it first. */
-function TermBody({ term, lang }: { term: Term; lang: Lang }) {
+/**
+ * One term in the player's language, by id.
+ *
+ * For the callers that already know which term they want and only need its
+ * words — the dialogue player, which is told an id by the text it is revealing.
+ */
+export function useTerm(id: string | null | undefined): Term | undefined {
+  const glossary = useContext(GlossaryContext)
+  return id ? glossary?.terms.get(id) : undefined
+}
+
+/**
+ * Several terms by id, in the player's language, skipping any that do not
+ * exist. For a script line that names what the era is about to build.
+ */
+export function useTermsByIds(ids: string[] | undefined): Term[] {
+  const glossary = useContext(GlossaryContext)
+  return useMemo(
+    () => (ids ?? []).map((id) => glossary?.terms.get(id)).filter((term): term is Term => !!term),
+    [ids, glossary],
+  )
+}
+
+/** The term the pointer is resting on, in the player's language. */
+export function useHoveredTerm(): Term | undefined {
+  const glossary = useContext(GlossaryContext)
+  const hovered = useContext(HoverContext)
+  return hovered ? glossary?.terms.get(hovered) : undefined
+}
+
+/** The language the glossary is being read in, for callers not given one. */
+export function useGlossaryLang(): Lang {
+  return useContext(GlossaryContext)?.lang ?? 'en'
+}
+
+/** Open the glossary panel for a term. Nothing happens where there is no provider. */
+export function useOpenTerm(): (id: string) => void {
+  const glossary = useContext(GlossaryContext)
+  return glossary?.open ?? (() => {})
+}
+
+/**
+ * What a line of the primer could be illustrated with, best first.
+ *
+ * A primer point names several things — a radio tower is explained in terms of
+ * antennas and how a wave travels — and only one of them is what the point is
+ * *for*. The era's own terms come first, because a primer is introducing this
+ * era's work and mentioning the last one's in passing.
+ *
+ * A list rather than one answer, so a caller that has already drawn the first
+ * choice on an earlier point can fall through to the next instead of leaving
+ * the point bare. Terms with no diagram drawn for them are left out entirely.
+ */
+export function subjectsOf(text: string, era: number, lang: Lang): Term[] {
+  const terms = termMap(lang)
+  const seen = new Set<string>()
+  const found = findTerms(text)
+    .map((hit) => terms.get(hit.id))
+    .filter((term): term is Term => !!term && !!figureFor(term.id) && !seen.has(term.id) && !!seen.add(term.id))
+  return [...found.filter((term) => term.era === era), ...found.filter((term) => term.era !== era)]
+}
+
+/**
+ * What a term is, then what it looks like and how it works, then why the
+ * project needed it and who did it first.
+ *
+ * The picture goes after the one-line definition and before the argument,
+ * because the definition is what you need to know you are in the right place
+ * and the argument is only worth reading once you can see the thing.
+ */
+function TermBody({ term, lang, compact }: { term: Term; lang: Lang; compact?: boolean }) {
   const t = UI[lang]
   return (
     <>
       <p className="term-card__what">{term.what}</p>
+      <TechFigure id={term.id} steps={term.steps} photo={photoFor(term.id)} compact={compact} />
       <p className="term-card__why">{term.why}</p>
       {term.real && (
         <p className="term-card__real">
@@ -156,7 +261,7 @@ export function GlossaryPage({ lang, onExit }: { lang: Lang; onExit: () => void 
               {byEra.get(era)!.map((term) => (
                 <article key={term.id} className="term-card">
                   <h3 className="term-card__name">{term.name}</h3>
-                  <TermBody term={term} lang={lang} />
+                  <TermBody term={term} lang={lang} compact />
                 </article>
               ))}
             </div>
@@ -173,13 +278,14 @@ export function GlossaryPage({ lang, onExit }: { lang: Lang; onExit: () => void 
  * Not the chapter titles — those are the story's names for the eras ("The
  * Copper War"), and here the reader wants the technology, not the drama.
  */
-const ERA_NAME: Record<Lang, string[]> = {
+export const ERA_NAME: Record<Lang, string[]> = {
   en: [
     'Before telecommunications',
     'AM radio',
     'Telegraph',
     'Telephone',
     'Electronics',
+    'The first machine',
     'Computing',
     'Packet networks',
     'Internetworking',
@@ -190,6 +296,7 @@ const ERA_NAME: Record<Lang, string[]> = {
     'Telegraf',
     'Telepon',
     'Elektronika',
+    'Mesin pertama',
     'Komputasi',
     'Jaringan paket',
     'Antarjaringan',

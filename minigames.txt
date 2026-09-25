@@ -1,0 +1,258 @@
+MINIGAMES
+=========
+
+Notes, not decisions. One per era, each built around the choice the people who
+actually did this had to make. Eras 0 and 1 are built; the rest are not.
+
+Two rules that apply to all of them
+-----------------------------------
+
+1. Skippable, with an honest auto-resolve. These get replayed. A player who has
+   proved they can key Morse should be able to hand it to a clerk at a fair
+   rate rather than key every message for the rest of the era.
+
+2. Each one has to BE the era's real decision, not a reflex test in the era's
+   costume. Where a minigame cannot be that, the era is better off without one.
+
+
+ERA 0 — THE PARLEY                                                       [BUILT]
+--------------------------------------------------------------------------------
+
+The problem was era0.ts:736: a single roll.
+
+    win = 0.34 + rations/40 * 0.28 + classBonus + attempts * 0.07
+
+Every decision the player made happened before the walk. The era's central
+action — talking a village into the network — was the one thing the player did
+not do.
+
+What is there now, in `parley.ts` and `Parley.tsx`: **one line and one click.**
+
+  - The village says what it needs. Food, somewhere to leave a message, word
+    carried to kin in another town, or a watch on the ridge.
+  - Four offers, one for each: rations, a board on your gate, a fire on your
+    hill, we carry your word. They are the era's own economy, so choosing one
+    teaches boards and fires rather than teaching a minigame.
+  - Right offer, they are in. Wrong offer, they want a price — a second visit,
+    not a closed door, and by then the player knows the answer.
+  - `attempts` stayed as memory. The dice went.
+
+A place needs what it needs, dealt round-robin down a hash ordering so the four
+wants come out even across thirteen settlements. A settlement whose hill sees
+nobody never wants a watch, because the roster already marks that hill blind and
+a right answer the map calls impossible reads as the game lying.
+
+The rations offer takes 4 out of the store, or whatever is in it when there is
+less. It is never off the table: an earlier build blocked it below 4, and since
+the larder sits near empty through the first fortnight, that made a village that
+needed food unwinnable — a headless run stalled at 3 of 13 settlements on day 11
+and never moved again. What can be given is a price, not a gate.
+
+
+Why it is this small
+--------------------
+
+The first build was much bigger: a hidden **fear** as well as a hidden want,
+three rounds, six offers, a running score, four reply tiers. It read well and it
+was the wrong thing to build. The player arrives at this screen in the middle of
+planning who walks where and deciding where the wood goes — it is a stop on the
+way through a day, not a game to sit down with. Two riddles and an arithmetic
+budget on top of route planning is a puzzle inside a puzzle.
+
+Cut, and worth naming so it is not re-invented:
+
+  - the fear axis, and with it the "nothing, and say so" offer that answered
+    being owed, and Tajuddin waiting outside — a genuine tradeoff (he wins the
+    village that fears raiders and loses the one that fears being occupied) and
+    much better writing than the flat -0.08 penalty it replaced. It cost a
+    whole second hidden variable to run.
+  - two of the three rounds, the score, and the speaker bonuses.
+
+If any of it comes back it should be as flavour on the reply, not as a second
+thing to solve.
+
+
+Three things the first draft of this note got wrong, corrected in the build
+---------------------------------------------------------------------------
+
+  - **Rations were never spent.** `offer = min(1, rations/40)` only *read* the
+    larder.
+
+  - **The old offer term fired at the wrong time.** OFFER_FULL and RATION_CAP
+    were both 40, while income is 3 + 0.5 per talking settlement against 3 crew
+    eating. The larder is near-empty during the first parleys and full when
+    there is nothing left to win. The whole term is gone.
+
+  - **Parleys resolve in a batch.** `resolveSurveyDay` loops the crew, so up to
+    3 exchanges can land on one end-day click. The day is now split: `era0.ts`
+    reports who is sitting down (`parleySeats`), the store queues them one at a
+    time, and `resolveSurveyDay` takes the outcomes as an argument. A seat with
+    no outcome is played deaf by the same rules, which is what makes the skip
+    button honest and what keeps `tools/survey-balance.ts` running headless.
+
+Volume is bounded, which is why any of this is affordable: contact never decays,
+and the win needs 8 of 13 settlements, so a run is roughly 10 exchanges.
+
+
+ERA 1 — THE TUNING BENCH                                                 [BUILT]
+--------------------------------------------------------------------------------
+
+Where this note has been: the first draft wanted a nightly board with power,
+mast height and a time slot on it. None of those three exist. Mast height is a
+fixed field per settlement in `world.ts`, `link.nightOnly` is derived from
+geometry inside `refreshLinks` with no notion of time of day, and there is no
+transmit-power variable anywhere in the model. RAID_PER_EXPOSED_SITE counts
+*unguarded* sites, not loud ones.
+
+What was built: a frequency bench, run once per site, at the moment the set goes
+on the air. `commission` gives it power, an operator and stage 3 — tuning
+belongs there, because there is nothing to tune until there is power in it, and
+because it is a moment the player already stops at 13 times a run.
+
+The bench is one gesture. A dial from 1600 to 7400 kHz with a dead gap in the
+middle, one carrier hiding in each half, and a meter. Drag until the meter
+climbs, stop on the peak, lock it in. Which half you stopped in is the site's
+**band**; how near the peak you got is its **trim**.
+
+    src/tuning.ts    the dial, the carriers, the score, the clerk
+    src/Tuning.tsx   the bench and the picture
+    src/sim.ts       `carry`, `bandsOf`, band-aware `refreshLinks`, `tuningSeats`
+
+The picture is why it is worth stopping for. A strip measured in multiples of
+the circuit's own reach — so one drawing is true for every neighbour whatever
+its mast height — with the zones shaded and this site's circuits marked on it.
+Slide across the gap and the shading changes under them: the sky wave's skip
+zone becomes a hole you watch a settlement fall into. That is the one place in
+the game where propagation is a thing you can see rather than a glossary entry.
+
+    ground   0 .. 1 reach daylight, out to 1.65 after dark
+    sky      0 .. 0.35 close in, DEAD to 0.9, then out to 2.6 after dark
+             at full speed, because what arrives is a strong signal
+
+A link needs both ends on the same band. A **hardened** site holds both, which
+gives `harden` a job beyond slowing wear and makes a relay station mean what a
+relay station means. Off channel is its own link status — the fix is a bench,
+not a kit, so it should not read as "silent".
+
+Trim runs 0.6 to 1 and multiplies the circuit's margin. Floored well above zero
+on purpose: a botched tune costs speed on everything the site carries and never
+takes it off the air. A minigame that can brick a site is one players stop
+trusting.
+
+
+What the numbers said, and what that meant for the design
+---------------------------------------------------------
+
+Measured before any of it was written. The region is 25 km across and the masts
+are tall, so every link but one sits far inside daylight reach:
+
+    batavia-tangerang       20.8 km   reach 49.4
+    tangerang-serang        53.5 km   reach 50.9   night only, half speed
+    the other ten            3.2 to 21.5 km, all reach 39 to 97
+
+So the **band** changes exactly 2 of the 12 links: Batavia-Tangerang dies on the
+sky wave (20.8 km lands in a 17.3-44.4 km hole) and Tangerang-Serang goes from
+4 wpm at night to full speed. That is not a network-wide decision, it is a
+Serang decision, and the era's new objective falls straight out of it: harden
+Tangerang so it can hold the ground wave for Batavia and the sky wave for Serang
+at once. Measured: 17 wpm and 9 wpm (night), against `off channel` if Tangerang
+is not hardened.
+
+The **trim** is what runs at all 13 commissions, and it is the half that earns
+its keep on a map this small.
+
+Every seed site is `band: 'ground'`, `trim: 1`, so the authored opening is
+byte-identical to what it was — diffed against the pre-change build, all twelve
+links unchanged.
+
+
+What was left out
+-----------------
+
+  - **Trim does not decay.** It is set once and multiplies margin from then on.
+    Tying it to `wear` would double-count what `worn` already does, and giving
+    `repair` a second bench was more machinery than the idea is worth.
+  - **Co-channel interference**, from the last draft of this note. It is the
+    true reason frequency assignment is a job, and it would make the band a
+    decision at every site rather than at two — but all thirteen sites start on
+    one channel, so it needs its own balance pass, not a paragraph.
+  - **A bigger map.** The band is a two-site decision because the region is
+    25 km across. Somewhere past Serang would change that, and it is a larger
+    piece of work than any minigame in this file.
+
+
+ERA 2 — THE KEY
+---------------
+
+Tap a word. Hold for a dash. The receiving clerk's skill decides how sloppy the
+player is allowed to be, which ties straight to MAX_WPM.
+
+Teaches the thing the glossary entry says and nobody believes until they try it:
+the silences are as much of the code as the marks.
+
+
+ERA 3 — THE SWITCHBOARD
+-----------------------
+
+Cords, jacks, a queue. Calls arrive wanting a number; patch, hold, tear down.
+Rush hour brings more calls than there are cords.
+
+The era's win condition is automating yourself out of the minigame, which is the
+best joke available in this whole game and is also exactly what happened to Ayu.
+
+
+ERA 4 — THE GLASS BENCH
+-----------------------
+
+Shape a tube: heat, blow, seal, pump, test. Too little heat and it will not
+move; too much and it collapses.
+
+Yield-based rather than pass/fail — 14 attempts, some crack. Teaches that the
+bottleneck of the era is craft, not theory, which is the whole argument Hendra
+makes in the opening.
+
+
+ERA 5 — THE CORE PLANE
+----------------------
+
+Either: thread the rings on a wire grid to a pattern, half-current on each wire
+so only the crossing flips.
+
+Or: the routing-table drill. Here is a table and a packet — pick the port. The
+wrong port and the player watches the packet loop. Teaches the thing that is
+hard to say in a sentence: the node does not know the route.
+
+
+ERA 6 — THE SORTER
+------------------
+
+A message split into numbered packets. Lines go up and down mid-flight. Get them
+all through and reassembled. Noise flips a bit, the checksum catches it, the far
+end asks for that one again.
+
+Store and forward plus error correction, played rather than read.
+
+
+ERA 7 — THE HANDSHAKE
+---------------------
+
+Two networks that agree on nothing. Map the envelope fields so the gateway can
+carry one into the other without understanding either.
+
+Or the harder version: set your own timeout and acknowledgement rules, then
+watch a lossy link and find out whether what you just designed deadlocks.
+
+
+BUILD ORDER
+-----------
+
+Era 0 is built. It was moved to the front of the queue because it was the
+biggest real complaint — the era's central action was a dice roll — and because
+era 1's original plan turned out to need model changes that era 0's did not.
+
+Era 1 is built — the trim and the band together, because the trim alone is a
+skill check with nothing to decide and the band alone would only ever fire at
+Tangerang.
+
+Era 2's key next. It is the smallest of the rest and it is the one the glossary
+already sets up: the silences are as much of the code as the marks.

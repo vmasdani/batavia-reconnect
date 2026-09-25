@@ -21,27 +21,78 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Dialogue } from './Dialogue'
 import { Backdrop } from './backdrops'
+import { EraRelay } from './EraRelay'
 import { Card } from './Story'
 import { castOf } from './story'
 import { briefingFor } from './briefings'
-import { TermText } from './Glossary'
+import { TermText, subjectsOf } from './Glossary'
+import { TechFigure } from './figures'
+import { photoFor } from './photos'
+import type { Term } from './glossary'
 import { UI, chaptersIn, type Lang } from './lang'
 import { useGame } from './store'
 
 /**
- * Title card, the scene, how communication works here, then the work. Then the
- * game. The primer comes before the objective on purpose: a player who does
- * not know what a notice board is cannot be told to go and build one.
+ * Title card, the errand, the scene, how communication works here, then the
+ * work. Then the game.
+ *
+ * The errand comes second, before anybody has spoken: the same message crossing
+ * the same nine places it crosses in every other chapter, and the number it
+ * takes this time. It is the premise of the era stated in one figure, and it is
+ * the figure the era exists to bring down. The primer comes before the
+ * objective for the same kind of reason — a player who does not know what a
+ * notice board is cannot be told to go and build one.
  */
-type Beat = 'title' | 'scene' | 'primer' | 'briefing'
+type Beat = 'title' | 'relay' | 'scene' | 'primer' | 'briefing'
 
-export function EraOpening({ era, lang }: { era: number; lang: Lang }) {
+export function EraOpening({
+  era,
+  lang,
+  onDone,
+}: {
+  era: number
+  lang: Lang
+  /** Where to go when the scene is over. A playable era falls through to its map. */
+  onDone?: () => void
+}) {
   const owed = useGame((s) => s.opening)
-  const dismiss = useGame((s) => s.dismissOpening)
+  const close = useGame((s) => s.dismissOpening)
+  const dismiss = () => {
+    close()
+    onDone?.()
+  }
   const [beat, setBeat] = useState<Beat>('title')
   const [line, setLine] = useState(0)
   const chapter = useMemo(() => chaptersIn(lang).find((c) => c.era === era), [lang, era])
   const briefing = useMemo(() => briefingFor(era, lang), [era, lang])
+  /**
+   * The photograph for each point of the primer, keyed by the point it belongs to.
+   *
+   * A name in a paragraph teaches nobody what a switchboard is. The first time
+   * an era's primer names one of its technologies, a photograph of the real
+   * object is put on the page, so the paragraph has something to be about. The
+   * drawn diagram is not shown here: a primer is read straight through, and a
+   * schematic with numbered pins is a thing to study. It lives in the glossary,
+   * one click away, where studying it is the point.
+   *
+   * First mention only: a primer that says "antenna" in 3 consecutive points
+   * should not show the same antenna 3 times. A point whose best subject has
+   * already been shown — or has no photograph — falls through to the next
+   * technology it names, so it gets a picture of its own rather than none.
+   */
+  const plates = useMemo(() => {
+    const drawn = new Set<string>()
+    const found = new Map<string, Term>()
+    for (const thing of briefing?.primer.things ?? []) {
+      const term = subjectsOf(`${thing.name}. ${thing.plain}`, era, lang).find(
+        (t) => !drawn.has(t.id) && !!photoFor(t.id),
+      )
+      if (!term) continue
+      drawn.add(term.id)
+      found.set(thing.name, term)
+    }
+    return found
+  }, [briefing, era, lang])
 
   // A new run of the same era starts its scene from the top.
   useEffect(() => {
@@ -57,7 +108,12 @@ export function EraOpening({ era, lang }: { era: number; lang: Lang }) {
 
   return (
     <div className="story story--opening">
-      {beat === 'scene' ? (
+      {beat === 'relay' ? (
+        <>
+          <Backdrop era={era} />
+          <EraRelay era={era} lang={lang} onDone={() => setBeat('scene')} />
+        </>
+      ) : beat === 'scene' ? (
         <>
           <Backdrop era={era} />
           <Dialogue
@@ -79,6 +135,7 @@ export function EraOpening({ era, lang }: { era: number; lang: Lang }) {
         <>
           <Backdrop era={era} />
           <div className="briefing">
+            <div className="briefing__scroll">
             <p className="briefing__era">
               {t.era} {era} <span>·</span> {t.primer}
             </p>
@@ -94,20 +151,28 @@ export function EraOpening({ era, lang }: { era: number; lang: Lang }) {
             </div>
 
             <ol className="briefing__how briefing__how--primer">
-              {briefing.primer.things.map((thing) => (
-                <li key={thing.name}>
-                  <strong>{thing.name}</strong>
-                  <span>
-                    <TermText text={thing.plain} />
-                  </span>
-                  {thing.catch && (
-                    <span className="briefing__catch">
-                      <em>{t.butNot}</em>
-                      <TermText text={thing.catch} />
+              {briefing.primer.things.map((thing) => {
+                const shown = plates.get(thing.name)
+                return (
+                  <li key={thing.name}>
+                    <strong>{thing.name}</strong>
+                    <span>
+                      <TermText text={thing.plain} />
                     </span>
-                  )}
-                </li>
-              ))}
+                    {thing.catch && (
+                      <span className="briefing__catch">
+                        <em>{t.butNot}</em>
+                        <TermText text={thing.catch} />
+                      </span>
+                    )}
+                    {shown && (
+                      <div className="briefing__plate">
+                        <TechFigure id={shown.id} photo={photoFor(shown.id)} photoOnly />
+                      </div>
+                    )}
+                  </li>
+                )
+              })}
             </ol>
 
             <div className="briefing__stakes briefing__stakes--one">
@@ -119,19 +184,23 @@ export function EraOpening({ era, lang }: { era: number; lang: Lang }) {
               </section>
             </div>
 
-            <button
-              type="button"
-              className="button button--primary briefing__begin"
-              onClick={() => setBeat('briefing')}
-            >
-              {t.toTheWork}
-            </button>
+            </div>
+            <div className="briefing__foot">
+              <button
+                type="button"
+                className="button button--primary briefing__begin"
+                onClick={() => setBeat('briefing')}
+              >
+                {t.toTheWork}
+              </button>
+            </div>
           </div>
         </>
       ) : beat === 'briefing' && briefing ? (
         <>
           <Backdrop era={era} />
-          <div className="briefing">
+          <div className={`briefing${briefing.how ? '' : ' briefing--short'}`}>
+            <div className="briefing__scroll">
             <p className="briefing__era">
               {t.era} {era} <span>·</span> {t.briefing}
             </p>
@@ -149,23 +218,33 @@ export function EraOpening({ era, lang }: { era: number; lang: Lang }) {
               </section>
             </div>
 
-            <h2 className="briefing__how-head">{t.howToPlay}</h2>
-            <ol className="briefing__how">
-              {briefing.how.map((point) => (
-                <li key={point.what}>
-                  <strong>{point.what}</strong>
-                  <span>{point.note}</span>
-                </li>
-              ))}
-            </ol>
+            {/* Only an era that is actually played has a loop to explain. The
+                rest are read: the objective and the end of the era are the
+                whole briefing, and there is nothing after this card. */}
+            {briefing.how && (
+              <>
+                <h2 className="briefing__how-head">{t.howToPlay}</h2>
+                <ol className="briefing__how">
+                  {briefing.how.map((point) => (
+                    <li key={point.what}>
+                      <strong>{point.what}</strong>
+                      <span>{point.note}</span>
+                    </li>
+                  ))}
+                </ol>
+              </>
+            )}
 
-            <button
-              type="button"
-              className="button button--primary briefing__begin"
-              onClick={dismiss}
-            >
-              {t.startEra}
-            </button>
+            </div>
+            <div className="briefing__foot">
+              <button
+                type="button"
+                className="button button--primary briefing__begin"
+                onClick={dismiss}
+              >
+                {briefing.how ? t.startEra : t.mainMenu}
+              </button>
+            </div>
           </div>
         </>
       ) : (
@@ -180,7 +259,7 @@ export function EraOpening({ era, lang }: { era: number; lang: Lang }) {
             title={chapter.title}
             body={chapter.premise}
             action={t.begin}
-            onAction={() => setBeat('scene')}
+            onAction={() => setBeat('relay')}
           />
           {/* The dialogue carries its own skip; the card has to offer one too,
               or a replayed era makes you sit through a card to reach it. */}

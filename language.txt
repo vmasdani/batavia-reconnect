@@ -1,0 +1,347 @@
+WRITING THE INDONESIAN
+======================
+
+How the two scripts relate, what the Indonesian is allowed to do, and the
+specific ways a good English line turns into a bad Indonesian one.
+
+Written after four passes over Era 0 and Era 1, most of which found the
+same handful of faults again. It exists so the fifth pass does not have
+to rediscover them.
+
+Companion to spec.txt. The rules here are enforced partly by
+tools/script-check.ts and mostly by reading.
+
+
+THE CONTRACT
+============
+
+The English files own the structure. Which era, who speaks, how many
+lines, where the scenes break — all of it lives in story.ts, skits.ts
+and era0-skits.ts, and none of it is repeated in the Indonesian.
+
+The Indonesian files supply text at matching indices, and nothing else:
+
+    story.ts        <-  story.id.ts
+    era0-skits.ts   <-  era0-skits.id.ts
+    skits.ts        <-  skits.id.ts
+
+A translation therefore cannot drift out of step with the scene it
+belongs to. The worst that can happen is a missing line, which falls
+back to English rather than rendering blank, and a line-count mismatch,
+which check:script reports.
+
+WHAT THE INDONESIAN MAY CHANGE
+------------------------------
+
+Wording, rhythm, imagery, sentence count within one line, and any figure
+of speech that does not survive the crossing. It is a performance of the
+scene, not a gloss of the sentence.
+
+WHAT IT MAY NOT CHANGE
+----------------------
+
+Facts, numbers, names, and any motif the rest of the script leans on.
+
+This is the failure that costs the most and shows the least. Two real
+examples, both found long after they were introduced:
+
+    EN    It used to take 8 seconds to call them.
+    BAD   Dulu kalo pake telpon kan ga sampe beberapa detik.
+    GOOD  Dulu buat nelpon mereka cuma 8 detik.
+
+8 seconds is the spine of the whole script. There is an Era 0 skit
+called "8 detik", Pak Min says it again in Era 1, and the relay card
+times the same errand nine times against it. The vague translation meant
+an Indonesian player never heard the number in the scene that introduces
+it, so two later scenes lost their echo.
+
+    EN    I think the problem is that we have 3 days of rice.
+          Your map does not show that.
+    BAD   Dari perspektif lu, itu lu lagi baca peta. Gua ngitung jumlah
+          gudang yang ada. Itu pekerjaan yang beda.
+    GOOD  Masalahnya beras kita tinggal 3 hari. Itu ga keliatan di peta
+          lu.
+
+The invented version dropped the rice, and four lines later Bayu replies
+to an argument nobody made in Indonesian.
+
+    EN    And you think that is the problem.
+    BAD   Nah, berarti lu ngerti masalahnya.
+    GOOD  Terus menurut lu itu masalahnya?
+
+Bayu is challenging Mel. The bad line has him agreeing with her, which
+turns her correction in the next line into an addition and takes the
+argument out of the scene.
+
+
+WHO SPEAKS HOW
+==============
+
+Two registers, and they are not per-character. They are per-pair.
+
+THE FOUNDERS - gua, lu, no ceremony, elder or not
+    bayu  mel  tajuddin  pakmin
+
+    They walked the region together and never stopped working together.
+    Pak Min is thirty years older than Bayu and still says lu. Distance
+    shows up as clipping a name (Bay), not as a pronoun.
+
+EVERYONE WHO JOINED LATER - saya, and the founders by title
+    iwan  sari  ayu  ratna  hendra  dewi  fajar  anisa
+
+    The project is their work but the founders' whole life. Neither
+    slang nor written Indonesian: ordinary polite speech.
+
+THE NARRATOR - written Indonesian
+    tidak, sudah, kau, mengucapkannya. The only voice that gets them.
+
+THE ONE ASYMMETRY THAT MATTERS
+------------------------------
+
+Bayu says saya and Bapak to Pak Min, and gua and lu to Mel and
+Tajuddin, in the same scene. Era 1's opening establishes it at their
+first meeting and it never goes away.
+
+A skit that has Bayu saying lu to Pak Min is wrong even though both men
+are in the founders' list. check:script cannot catch this, because it
+knows who is speaking and not who is being spoken to.
+
+NUMBERS
+-------
+
+2 and above are digits, in both languages. People say "3 hari", not
+"tiga hari". One stays a word: it usually means "a single", not a count.
+
+Ordinals, fractions and dua-duanya are exempt. check:script enforces
+this and maintains the exemption list.
+
+
+THE SIX RULES
+=============
+
+English survives a word-for-word translation. Indonesian does not. Every
+one of these is a fault found in shipped lines, not a style preference.
+
+1. A CONTRAST NAMES ITS SECOND TERM
+-----------------------------------
+
+English can say "that is different" and leave the comparison hanging.
+Indonesian says what it is different from.
+
+    EN    No. They were deciding whether to let us through.
+    BAD   Engga. Mereka lagi mikir. Itu beda, dan lu bakal cepet belajar
+          bedainnya.
+    GOOD  Engga. Mereka lagi mikir, mau ngelewatin kita apa engga. Beda
+          sama takut. Lama-lama lu bisa bedain kok.
+
+The same rule covers verbs whose object English drops:
+
+    EN    Dogs, mostly. They know before we do.
+    BAD   Mereka tau duluan sebelum kita tau.
+    GOOD  Mereka tau duluan kalo ada perampok, jauh sebelum kita tau.
+
+    EN    It is the only one I cannot see.
+    BAD   Cuma itu yang ga keliatan sama gua.
+    GOOD  Cuma itu yang ga keliatan dari sini, jadi gua ga tau ada yang
+          ngeliatin kita apa engga.
+
+2. ABSTRACT NOUN PREDICATES BECOME VERBS
+----------------------------------------
+
+"That was the whole negotiation" is an essay sentence in either
+language. Indonesian says the action.
+
+    EN    That was enough.
+    BAD   Itu seluruh negosiasinya.
+    GOOD  Udah, segitu doang.
+
+The medical-report register is the same fault wearing a different coat:
+
+    EN    before my knees get worse
+    BAD   sebelum dengkul gua tambah parah
+    GOOD  sebelum encok gua kambuh
+
+"tambah parah" is a calque of "get worse". Indonesian has a fixed
+collocation for a body complaint - kambuh - and it pairs with encok.
+
+3. SENTENCE-FINAL PARTICLES CARRY STANCE
+----------------------------------------
+
+    kok  deh  sih  aja  dong  tuh  nih  lah  mah  ya
+
+Speech without them reads as translated. The first draft of Era 0's
+skits had 4 particle tokens across 51 lines; the revision has 18.
+
+They are placed, not sprinkled. A particle goes where somebody actually
+has an attitude. The heavy scenes stay deliberately bare - eight-seconds
+and most of letter-waiting carry almost none, and that is what makes
+them land differently from the rest.
+
+4. CLAUSES ARE JOINED OUT LOUD
+------------------------------
+
+English leaves adjacent full stops and lets the reader infer the join.
+Indonesian says it.
+
+    terus  padahal  makanya  giliran  soalnya  ujung-ujungnya  emang
+
+    EN    Nobody notices a thing while it works. Then it is gone, and
+          you spend the rest of your life paying attention.
+    GOOD  Selama barangnya masih jalan, emang ga ada yang merhatiin.
+          Giliran udah ilang, baru deh lu merhatiin seumur idup.
+
+5. A TOPIC PIVOT NEEDS A SIGNAL
+-------------------------------
+
+English can change subject on a beat. Indonesian names what prompted
+the change, or the new line reads as a non sequitur.
+
+    EN    What do you think about while you walk?
+    BAD   Lu mikirin apa sih pas lagi jalan?
+    GOOD  Ngomong-ngomong, dari tadi gua perhatiin lu kayak ga tenang.
+          Lagi mikirin apa sih?
+
+    EN    How far is Bogor?
+    BAD   Berapa jauh Bogor?
+    GOOD  Bentar. Gua tes omongan lu. Bogor berapa jauh dari sini?
+
+Tajuddin is testing the claim Bayu made one line earlier. The English
+question carries that; the bare Indonesian question does not.
+
+A war story, a piece of biography or an example arriving with no
+handover is the same fault. Gua ngerti, Nah contohnya gini, Ya udah -
+one clause is usually enough.
+
+6. USE IMAGES THAT EXIST HERE
+-----------------------------
+
+A figure of speech is not translated. It is replaced by one that carries
+the same weight for a reader who grew up here.
+
+    EN    A crude radio can answer once.
+    BAD   Jari basah sama silet juga bisa jawab sekali.
+    GOOD  Kabel kesenggol doang juga bisa bikin dia jawab sekali.
+
+    A wet finger and a razor blade is a foxhole crystal set. The
+    reference does not exist here, so what survives is a literal wet
+    finger.
+
+    EN    You learn to be the envelope. It is easier than being the
+          letter.
+    BAD   Lama-lama lu belajar jadi amplopnya.
+    GOOD  Lama-lama lu belajar jadi yang nganterin doang, bukan yang
+          dianterin.
+
+    English personifies stationery. Indonesian reads it literally.
+
+    EN    before you put your boots on
+    BAD   sebelum lu kelar pake sepatu
+    GOOD  sebelum lu sempet berdiri
+
+    An English idiom for "before you can react", carrying footwear
+    nobody here wears.
+
+    EN    I still liked being needed.
+          Then get used to being useful instead.
+    BAD   ...jadi orang yang dibutuhin. / ...jadi orang yang kepake aja.
+    GOOD  ...jadi orang yang dibutuhin. / ...jadi salah satu, bukan
+          satu-satunya.
+
+    English plays needed against useful. In Indonesian dibutuhin and
+    kepake are near-synonyms, so the retort collapses into repetition.
+    The distinction that does exist here is being one of many against
+    being the only one.
+
+    EN    Every one of those racks was a street.
+    BAD   Tiap rak di situ itu satu jalan.
+    GOOD  Tiap rak di situ satu nama jalan.
+
+    English metonymy. In Indonesian "satu jalan" also reads as "one
+    way", so the sentence is ambiguous until the street names arrive.
+
+Sometimes the swap improves on the English. "Then plant the radio tower,
+boy" is a deliberate pun in English; nanem tiang is ordinary Indonesian
+for erecting a mast, so the joke lands harder here than there. Keep
+those.
+
+
+ONE WORD PER THING
+==================
+
+A term the player will meet again keeps the same Indonesian word
+everywhere, across all six script files.
+
+    circuit, the end-to-end link      jalur
+    raiders, the thing that takes it  perampok
+    the era 1 transmit control        tombol pancar
+    the era 2 telegraph key           kunci
+    courier                           kurir
+
+Three of these were found as inconsistencies, not chosen in advance:
+
+- circuit was jalur in the story and rangkaian in the skits. rangkaian
+  is a circuit of components, which is a different thing from a 100 km
+  link.
+- the Era 1 skit called the transmit control a telegraph key. Era 1 is
+  AM voice radio; the key belongs to Era 2, and the storyline already
+  had tombol pancar.
+- maling was considered for the night-time threat and rejected: the game
+  calls it perampokan in the briefings, and maling is a sneak thief
+  rather than a group that can carry off a generator.
+
+The glossary is the tiebreaker. If a term has an Indonesian name or
+alias in glossary.id.ts, the script uses that spelling, because that is
+what makes it light up for the reader.
+
+
+HOW TO AUDIT A PASS
+===================
+
+check:script catches four things and nothing else: line counts, spelled
+numbers, glossary coverage, diagram pin counts, and the pronoun register
+of whoever is speaking. Everything in THE SIX RULES is invisible to it.
+
+So the audit is done by reading, with two throwaway scripts that make
+reading cheap. Both live in the scratchpad, not in the repo.
+
+1. DUMP THE PAIRS
+
+Print every spoken line as EN above ID, with speaker and index, skipping
+the narrator. Reading English and Indonesian side by side is what
+surfaces drift; neither file alone shows it.
+
+Filter to the eras being worked on. A whole-script dump is too long to
+read carefully, and a pass that is not read carefully finds nothing.
+
+2. COMPARE GLOSSARY LIGHTING
+
+For the same eras, collect which terms findTerms lights in the English
+text and which in the Indonesian, and diff the two sets.
+
+A term that lights in one language and not the other is either a
+translation that lost a technology word, or an alias list with a hole in
+it. This check found both, plus two defects in the English:
+
+- "Key it again" in an Era 1 skit lit telegraph-key, a term Era 2
+  introduces. Fixed to "Press it again".
+- "envelope" was an alias of glassblowing, for a valve's glass envelope.
+  It lit on Era 0's line about a letter. Alias removed.
+
+Neither would ever have been noticed by reading the English alone.
+
+3. COUNT PARTICLES
+
+A per-file tally of the ten particles in rule 3. Not a target to hit -
+it is a smell test. Four in fifty lines means the pass has not started.
+
+
+WHAT THIS DOCUMENT IS NOT
+=========================
+
+It is not a style guide for the English. The English is written first
+and on its own terms; when it is wrong, it gets fixed as English.
+
+It is not a licence to rewrite. Every example above changed a line
+because the Indonesian was failing at something specific and nameable.
+A line that reads well and says what the English says is finished, and
+the fact that it could be phrased differently is not a reason.

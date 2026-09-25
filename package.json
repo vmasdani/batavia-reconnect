@@ -12,7 +12,13 @@
     "cut:portraits": "node tools/cut-portraits.mjs",
     "make:portraits": "node tools/make-portraits.mjs",
     "check:script": "esbuild tools/script-check.ts --bundle --resolve-extensions=.ts,.tsx,.js --format=esm --platform=node --loader:.svg=text --loader:.png=text --outfile=node_modules/.cache/script-check.mjs --log-level=error && node node_modules/.cache/script-check.mjs",
-    "balance:survey": "esbuild tools/survey-balance.ts --bundle --format=esm --platform=node --loader:.svg=text --loader:.png=text --outfile=node_modules/.cache/survey-balance.mjs --log-level=error && node node_modules/.cache/survey-balance.mjs"
+    "check:routes": "esbuild tools/route-check.ts --bundle --resolve-extensions=.ts,.tsx,.js --format=esm --platform=node --loader:.svg=text --loader:.png=text --outfile=node_modules/.cache/route-check.mjs --log-level=error && node node_modules/.cache/route-check.mjs",
+    "balance:survey": "esbuild tools/survey-balance.ts --bundle --resolve-extensions=.ts,.tsx,.js --format=esm --platform=node --loader:.svg=text --loader:.png=text --outfile=node_modules/.cache/survey-balance.mjs --log-level=error && node node_modules/.cache/survey-balance.mjs",
+    "pixelate": "node tools/pixelate.mjs",
+    "check:onebit": "esbuild tools/onebit-check.ts --bundle --resolve-extensions=.ts,.tsx,.js --format=esm --platform=node --outfile=node_modules/.cache/onebit-check.mjs --log-level=error && node node_modules/.cache/onebit-check.mjs",
+    "fetch:photos": "esbuild tools/fetch-photos.ts --bundle --resolve-extensions=.ts,.tsx,.js --format=esm --platform=node --outfile=node_modules/.cache/fetch-photos.mjs --log-level=error && node node_modules/.cache/fetch-photos.mjs",
+    "check:routing": "esbuild tools/routing-check.ts --bundle --resolve-extensions=.ts,.tsx,.js --format=esm --platform=node --loader:.svg=text --loader:.png=text --outfile=node_modules/.cache/routing-check.mjs --log-level=error && node node_modules/.cache/routing-check.mjs",
+    "check:relay": "esbuild tools/relay-check.ts --bundle --resolve-extensions=.ts,.tsx,.js --format=esm --platform=node --loader:.svg=text --loader:.png=text --outfile=node_modules/.cache/relay-check.mjs --log-level=error && node node_modules/.cache/relay-check.mjs"
   },
   "dependencies": {
     "pixi.js": "^8.6.6",

@@ -16,6 +16,7 @@ import { PixiMap } from './PixiMap'
 import { useGame } from './store'
 import { DayIcon, RESOURCE_ICON } from './icons'
 import { Dialogue } from './Dialogue'
+import { ParleyDialog } from './Parley'
 import { SkitChip, SkitOverlay } from './Skit'
 import { EraOpening } from './EraOpening'
 import { availableSurveySkits } from './era0-skits'
@@ -504,6 +505,12 @@ export function Prologue({ lang, onExit, onFinish }: { lang: Lang; onExit: () =>
       </footer>
 
       <ReportDialog />
+      {/*
+        The exchange at a gate, played between the click that ends the day and
+        the day being resolved. It sits above the report because it happens
+        before it: what the crew came away with is part of what the report says.
+      */}
+      <ParleyDialog lang={lang} />
       <SkitOverlay />
       <EraOpening era={0} lang={lang} />
 

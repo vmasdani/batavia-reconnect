@@ -22,12 +22,14 @@ import {
   groundMetres,
   scavengeState,
   scavengeYieldFactor,
+  type Band,
   type BuildStage,
   type ResourceId,
   type Settlement,
   type World,
 } from './world'
 import { PARTY } from './party'
+import { autoTuning, type Tuning, type TuningSeat } from './tuning'
 
 // --- balance -----------------------------------------------------------------
 
@@ -39,8 +41,20 @@ import { PARTY } from './party'
  */
 const RANGE_K = 3.6
 
-/** How much further the signal carries once the ionosphere lifts after dark. */
+/** How much further the ground wave carries once the ionosphere lifts after dark. */
 const NIGHT_SKIP = 1.65
+
+/**
+ * The sky wave, as fractions of the same reach.
+ *
+ * It dies quickly on the ground, is deaf across a wide band, and then comes
+ * back down a long way out — at full speed, because what arrives is a strong
+ * signal rather than a stretched one. That hole is the whole reason a band is
+ * a decision and not a preference.
+ */
+const SKY_NEAR = 0.35
+const SKY_SKIP = 0.9
+const SKY_FAR = 2.6
 
 const MAX_WPM = 30
 
@@ -125,7 +139,7 @@ export interface Recipe {
 
 export const RECIPES: Recipe[] = [
   {
-    id: 'mast', name: 'Mast kit', days: 2, cost: { steel: 6 },
+    id: 'mast', name: 'Radio tower kit', days: 2, cost: { steel: 6 },
     note: 'Sectional steel, guy wire, and a base plate that will not walk off.',
   },
   {
@@ -296,10 +310,35 @@ function antennaMetres(s: Settlement): number {
   return s.mast + groundMetres(s.tx, s.ty)
 }
 
+/** Daylight ground-wave reach between two antennas of these heights, in km. */
+export const reachMetres = (a: number, b: number) => RANGE_K * (Math.sqrt(a) + Math.sqrt(b))
+
 /** Daylight reach of a circuit between two sites, in km. */
 export function reachKm(a: Settlement, b: Settlement): number {
-  return RANGE_K * (Math.sqrt(antennaMetres(a)) + Math.sqrt(antennaMetres(b)))
+  return reachMetres(antennaMetres(a), antennaMetres(b))
 }
+
+/**
+ * The shape of each band, as fractions of reach.
+ *
+ * Exported because the bench draws exactly this and nothing else: a strip
+ * measured in reach rather than kilometres, so one picture is true for every
+ * neighbour whatever its mast height. Ordered near to far.
+ */
+export const BAND_ZONES: Record<Band, Array<{ to: number; kind: 'day' | 'night' | 'dead' }>> = {
+  ground: [
+    { to: 1, kind: 'day' },
+    { to: NIGHT_SKIP, kind: 'night' },
+  ],
+  sky: [
+    { to: SKY_NEAR, kind: 'day' },
+    { to: SKY_SKIP, kind: 'dead' },
+    { to: SKY_FAR, kind: 'night' },
+  ],
+}
+
+/** How far out any band ever reaches, for drawing an axis they share. */
+export const BAND_MAX = SKY_FAR
 
 /** A settlement is on the air when it is built, powered and staffed. */
 export function isOnAir(s: Settlement): boolean {
@@ -307,9 +346,43 @@ export function isOnAir(s: Settlement): boolean {
 }
 
 /**
+ * What one band does over one distance: whether it carries, whether only after
+ * dark, and how much of its reach is left over.
+ *
+ * The ground wave is the model this game has always had. The sky wave is the
+ * new shape: a short ground wave of its own, then nothing at all through the
+ * skip zone, then a long night circuit at full speed.
+ */
+export function carry(band: Band, km: number, reach: number): { nightOnly: boolean; margin: number } | null {
+  if (band === 'ground') {
+    if (km <= reach) return { nightOnly: false, margin: 1 - km / reach }
+    const night = reach * NIGHT_SKIP
+    return km <= night ? { nightOnly: true, margin: 1 - km / night } : null
+  }
+  const near = reach * SKY_NEAR
+  if (km <= near) return { nightOnly: false, margin: 1 - km / near }
+  if (km <= reach * SKY_SKIP) return null
+  const far = reach * SKY_FAR
+  return km <= far ? { nightOnly: true, margin: 1 - km / far } : null
+}
+
+/**
+ * Bands a site can actually put a signal out on.
+ *
+ * One, unless it is hardened — a hardened site has the second set and the
+ * feeder run to hold both, which is what separates a relay from a station and
+ * gives `harden` a job beyond slowing wear down.
+ */
+export const bandsOf = (s: Settlement): Band[] => (s.stage >= 4 ? ['ground', 'sky'] : [s.band])
+
+/**
  * Recompute every circuit from its two endpoints. Called each morning and
  * again after the night's raids, so the map never shows a link the hardware
  * could not support.
+ *
+ * Both ends have to be on the same band before anything else is asked: two
+ * sets pointed at each other on different halves of the dial cannot hear one
+ * another however close they are, and that reads as a distinct kind of broken.
  */
 export function refreshLinks(world: World): void {
   const byId = new Map(world.settlements.map((s) => [s.id, s]))
@@ -319,26 +392,40 @@ export function refreshLinks(world: World): void {
     if (!a || !b) continue
 
     const km = distanceKm(a, b)
-    const day = reachKm(a, b)
-    const night = day * NIGHT_SKIP
+    const reach = reachKm(a, b)
     const both = isOnAir(a) && isOnAir(b)
+    const shared = bandsOf(a).filter((band) => bandsOf(b).includes(band))
 
-    link.nightOnly = km > day && km <= night
     link.latencyMs = Math.round(km * 1.8)
 
-    if (!both || km > night) {
+    // Whichever band they share carries it best. Only a hardened end offers a
+    // choice at all, so this is at most two tries.
+    let best: { nightOnly: boolean; margin: number } | null = null
+    for (const band of shared) {
+      const got = carry(band, km, reach)
+      if (got && (!best || got.margin * (got.nightOnly ? 0.5 : 1) > best.margin * (best.nightOnly ? 0.5 : 1))) {
+        best = got
+      }
+    }
+
+    link.nightOnly = best?.nightOnly ?? false
+
+    if (!both || !best) {
       // Hardware standing at both ends but silent reads as a broken circuit;
-      // a route where something has yet to be built is merely surveyed.
+      // a route where something has yet to be built is merely surveyed. Off
+      // channel is its own answer, because the fix is a bench and not a kit.
       const standing = a.stage >= 2 && b.stage >= 2
       link.status = standing ? 'down' : 'planned'
       link.wpm = 0
-      link.bandwidth = standing ? 'silent' : '—'
+      link.bandwidth = !standing ? '—' : shared.length === 0 ? 'off channel' : 'silent'
       continue
     }
 
-    const margin = 1 - km / (link.nightOnly ? night : day)
     const worn = 1 - Math.max(a.wear, b.wear) / 150
-    const raw = MAX_WPM * margin * worn * (link.nightOnly ? 0.5 : 1)
+    // A sloppy tune at either end costs the whole circuit. The worse of the
+    // two is what the operators are actually fighting.
+    const tuned = Math.min(a.trim, b.trim)
+    const raw = MAX_WPM * best.margin * worn * tuned * (link.nightOnly ? 0.5 : 1)
     link.wpm = Math.max(4, Math.round(raw))
     link.status = 'live'
     link.bandwidth = `${link.wpm} wpm${link.nightOnly ? ' (night)' : ''}`
@@ -491,7 +578,7 @@ export function taskOptions(world: World, sim: Sim, memberId: string): TaskOptio
         group: 'Build',
         days: days + 2,
         needs: [kitNeed('mast'), kitNeed('transmitter')],
-        blocked: short ? 'no mast kit or set on the shelf' : undefined,
+        blocked: short ? 'no radio tower kit or set on the shelf' : undefined,
       })
     }
     if (can('commission') && s.stage === 2) {
@@ -699,7 +786,7 @@ export function buildsInProgress(world: World, sim: Sim): Progress[] {
         break
       }
       case 'install':
-        out.push({ memberId: member.id, what: `${site(state.task.target)} — mast`, daysLeft: left })
+        out.push({ memberId: member.id, what: `${site(state.task.target)} — radio tower`, daysLeft: left })
         break
       case 'commission':
         out.push({ memberId: member.id, what: `${site(state.task.target)} — on air`, daysLeft: left })
@@ -921,11 +1008,80 @@ export interface DayResult {
   moves: Move[]
 }
 
+// --- the bench ----------------------------------------------------------------
+
+/** Everything `tuning.ts` needs about a site that is about to go on the air. */
+function tuningSeat(world: World, memberId: string, s: Settlement): TuningSeat {
+  return {
+    memberId,
+    target: s.id,
+    targetName: s.name,
+    metres: antennaMetres(s),
+    // Only the circuits this site is actually meant to carry. The bench draws
+    // them against the reach, so the player can see which ones a band drops.
+    neighbours: world.links
+      .filter((l) => l.from === s.id || l.to === s.id)
+      .map((l) => world.settlements.find((n) => n.id === (l.from === s.id ? l.to : l.from))!)
+      .filter(Boolean)
+      .map((n) => ({
+        id: n.id,
+        name: n.name,
+        km: distanceKm(s, n),
+        metres: antennaMetres(n),
+        band: n.band,
+        live: isOnAir(n),
+        holdsBoth: n.stage >= 4,
+      })),
+  }
+}
+
+/**
+ * Sites that will be brought on the air tonight, worked out before the day is.
+ *
+ * Same split as Era 0's parley, for the same reason: the day loop is a batch,
+ * so more than one set can come up on a single click and the bench cannot be
+ * played from inside it. The store asks this first, runs each bench in turn,
+ * and hands the results back to `resolveDay`.
+ *
+ * Only seats that will really come up are offered. The commission case can
+ * still fail for want of a generator or an operator, and tuning a set that is
+ * about to be told there is no power is a bench nobody should have been shown.
+ */
+export function tuningSeats(world: World, sim: Sim): TuningSeat[] {
+  if (sim.stock.rations <= 0) return []
+  const byId = new Map(world.settlements.map((s) => [s.id, s]))
+  const seats: TuningSeat[] = []
+  const taken = new Set<string>()
+  for (const member of PARTY) {
+    const state = sim.crew[member.id]
+    if (!state || state.hurtDays > 0) continue
+    if (state.task.kind !== 'commission' || state.daysLeft > 1 || state.daysLeft <= 0) continue
+    const s = byId.get(state.task.target)
+    if (!s || s.stage !== 2 || taken.has(s.id)) continue
+    const powered = s.supply !== 'none' || sim.kits.genset > 0 || sim.kits.battery > 0
+    if (!powered || !(s.operator || sim.operators >= 1)) continue
+    taken.add(s.id)
+    seats.push(tuningSeat(world, member.id, s))
+  }
+  return seats
+}
+
 /**
  * Advance one day. Resolve work, derive the network, pay out the evening
  * broadcast, then let the night have its turn.
  */
-export function resolveDay(prevWorld: World, prevSim: Sim): DayResult {
+/**
+ * Advance one day.
+ *
+ * `tunings` carries whatever the player set at the bench, keyed by the crew
+ * member who was standing at the set. A site brought up without one is netted
+ * blind by `autoTuning` — which is what the skip button leaves behind.
+ */
+export function resolveDay(
+  prevWorld: World,
+  prevSim: Sim,
+  tunings: Record<string, Tuning> = {},
+): DayResult {
   const world = cloneWorld(prevWorld)
   const sim: Sim = {
     ...prevSim,
@@ -1039,9 +1195,9 @@ export function resolveDay(prevWorld: World, prevSim: Sim): DayResult {
           sim.kits.mast -= 1
           sim.kits.transmitter -= 1
           s.stage = 2
-          landed = { to: s.id, note: 'Mast up', tone: 'good' }
+          landed = { to: s.id, note: 'Radio tower up', tone: 'good' }
           state.at = s.id
-          say('good', `${member.name} stood the mast at ${s.name}. It needs power and somebody to key it.`)
+          say('good', `${member.name} stood the radio tower at ${s.name}. It needs power and somebody to key it.`)
           break
         }
         case 'commission': {
@@ -1073,9 +1229,24 @@ export function resolveDay(prevWorld: World, prevSim: Sim): DayResult {
           s.stage = 3
           s.wear = 0
           delete s.alert
+          // The bench, or a clerk's version of it. Either way the set is netted
+          // onto a channel before it transmits, because an untuned set is not
+          // a thing that can be on the air.
+          const given = tunings[member.id]
+          const tuned = given && given.target === s.id ? given : autoTuning(tuningSeat(world, member.id, s))
+          s.band = tuned.band
+          s.trim = tuned.trim
           landed = { to: s.id, note: 'On air!', tone: 'good' }
           state.at = s.id
-          say('good', `${s.name} is on the air.`)
+          say(
+            'good',
+            `${s.name} is on the air at ${tuned.khz} kHz, ${tuned.band === 'sky' ? 'sky wave' : 'ground wave'}.` +
+              (tuned.trim >= 0.95
+                ? ' Netted dead on.'
+                : tuned.trim <= 0.7
+                  ? ' The net is rough — it will cost speed on everything this site carries.'
+                  : ''),
+          )
           break
         }
         case 'harden': {
@@ -1235,7 +1406,7 @@ export function resolveDay(prevWorld: World, prevSim: Sim): DayResult {
       s.alert = {
         kind: 'off-air',
         message: '\u{1F4E1} OFF AIR — SET NEEDS WORK',
-        detail: 'Nobody has been up the mast in weeks. The set has drifted off frequency and stopped keying.',
+        detail: 'Nobody has been up the radio tower in weeks. The set has drifted off frequency and stopped keying.',
       }
       say('bad', `${s.name} dropped off the air. The set has been running untouched too long.`)
     }
@@ -1351,7 +1522,7 @@ export function resolveDay(prevWorld: World, prevSim: Sim): DayResult {
         }
         say('bad', `Raid on ${s.name}: ${took}, and the generator with it. The site is off the air.`)
       } else {
-        say('bad', `Raiders hit ${s.name} — ${took}. The mast held.`)
+        say('bad', `Raiders hit ${s.name} — ${took}. The radio tower held.`)
       }
     }
   }

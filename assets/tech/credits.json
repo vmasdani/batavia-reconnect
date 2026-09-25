@@ -1,0 +1,330 @@
+[
+  {
+    "id": "courier",
+    "file": "File:Pony_Express'60_West_bound_1860.jpg",
+    "url": "courier.jpg",
+    "credit": "pony express",
+    "license": "Public domain",
+    "page": "https://commons.wikimedia.org/wiki/File:Pony_Express%2760_West_bound_1860.jpg"
+  },
+  {
+    "id": "notice-board",
+    "file": "File:Infinite-corridor-bboard.jpeg",
+    "url": "notice-board.jpg",
+    "credit": "Joseph Barillari",
+    "license": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Infinite-corridor-bboard.jpeg"
+  },
+  {
+    "id": "signal-fire",
+    "file": "File:Beacon_Stawa_Młyny,_Świnoujście.jpg",
+    "url": "signal-fire.jpg",
+    "credit": "Radomianin",
+    "license": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Beacon_Stawa_M%C5%82yny,_%C5%9Awinouj%C5%9Bcie.jpg"
+  },
+  {
+    "id": "semaphore",
+    "file": "File:OptischerTelegraf.jpg",
+    "url": "semaphore.jpg",
+    "credit": "Lokilech at German Wikipedia",
+    "license": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:OptischerTelegraf.jpg"
+  },
+  {
+    "id": "line-of-sight",
+    "file": "File:VHF_propagation.png",
+    "url": "line-of-sight.png",
+    "credit": "Rudolfs Davis Strazds",
+    "license": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:VHF_propagation.png"
+  },
+  {
+    "id": "am-radio",
+    "file": "File:Antique_wooden_AM_radio_manufactured_in_Bharat.jpg",
+    "url": "am-radio.jpg",
+    "credit": "Amitbalani",
+    "license": "CC0",
+    "page": "https://commons.wikimedia.org/wiki/File:Antique_wooden_AM_radio_manufactured_in_Bharat.jpg"
+  },
+  {
+    "id": "transmitter",
+    "file": "File:WDET-FM_transmitter.png",
+    "url": "transmitter.png",
+    "credit": "LuckyLouie",
+    "license": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:WDET-FM_transmitter.png"
+  },
+  {
+    "id": "antenna",
+    "file": "File:Ketchikan_radio_tower.jpg",
+    "url": "antenna.jpg",
+    "credit": "Larry D. Moore",
+    "license": "CC BY 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Ketchikan_radio_tower.jpg"
+  },
+  {
+    "id": "generator",
+    "file": "File:Military_engine_generator.jpg",
+    "url": "generator.jpg",
+    "credit": "Audrius Meškauskas",
+    "license": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Military_engine_generator.jpg"
+  },
+  {
+    "id": "battery",
+    "file": "File:Photo-CarBattery.jpg",
+    "url": "battery.jpg",
+    "credit": "No machine-readable author provided. Shaddack assumed (based on copyright claims).",
+    "license": "Public domain",
+    "page": "https://commons.wikimedia.org/wiki/File:Photo-CarBattery.jpg"
+  },
+  {
+    "id": "propagation",
+    "file": "File:Skywave.jpg",
+    "url": "propagation.jpg",
+    "credit": "Kf4yfd, Noldoaran, Augiasstallputzer~commonswiki",
+    "license": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Skywave.jpg"
+  },
+  {
+    "id": "telegraph",
+    "file": "File:Wallace_Study-Telegraph.jpg",
+    "url": "telegraph.jpg",
+    "credit": "John Schanlaub from Lafayette,IN, USA",
+    "license": "CC BY 2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Wallace_Study-Telegraph.jpg"
+  },
+  {
+    "id": "telegraph-key",
+    "file": "File:J38TelegraphKey.jpg",
+    "url": "telegraph-key.jpg",
+    "credit": "Wikimedia Commons",
+    "license": "Public domain",
+    "page": "https://commons.wikimedia.org/wiki/File:J38TelegraphKey.jpg"
+  },
+  {
+    "id": "morse-code",
+    "file": "File:Dots_and_dashes_P_morse_code.svg",
+    "url": "morse-code.png",
+    "credit": "Thirunavukkarasye-Raveendran",
+    "license": "Public domain",
+    "page": "https://commons.wikimedia.org/wiki/File:Dots_and_dashes_P_morse_code.svg"
+  },
+  {
+    "id": "electromagnet",
+    "file": "File:Electromagnet-with-9V-battery.jpg",
+    "url": "electromagnet.jpg",
+    "credit": "MikeRun",
+    "license": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Electromagnet-with-9V-battery.jpg"
+  },
+  {
+    "id": "relay-station",
+    "file": "File:Telegraph_relay,_1850s.jpg",
+    "url": "relay-station.jpg",
+    "credit": "Daderot",
+    "license": "Public domain",
+    "page": "https://commons.wikimedia.org/wiki/File:Telegraph_relay,_1850s.jpg"
+  },
+  {
+    "id": "telephone",
+    "file": "File:Telefon_BW_2012-02-18_13-44-32.JPG",
+    "url": "telephone.jpg",
+    "credit": "Berthold Werner",
+    "license": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Telefon_BW_2012-02-18_13-44-32.JPG"
+  },
+  {
+    "id": "switchboard",
+    "file": "File:Jersey_Telecom_switchboard_and_operator.jpg",
+    "url": "switchboard.jpg",
+    "credit": "Joseph A. Carr",
+    "license": "Attribution",
+    "page": "https://commons.wikimedia.org/wiki/File:Jersey_Telecom_switchboard_and_operator.jpg"
+  },
+  {
+    "id": "exchange",
+    "file": "File:Telephone_Exchange,_Hither_Green_(Southeast_View_-_01).jpg",
+    "url": "exchange.jpg",
+    "credit": "Doyle of London",
+    "license": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Telephone_Exchange,_Hither_Green_(Southeast_View_-_01).jpg"
+  },
+  {
+    "id": "strowger",
+    "file": "File:Uniselector_Stepper_detail.jpg",
+    "url": "strowger.jpg",
+    "credit": "Brock Craft / Thatbrock at en.wikipedia",
+    "license": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Uniselector_Stepper_detail.jpg"
+  },
+  {
+    "id": "standard",
+    "file": "File:Rjxx.jpg",
+    "url": "standard.jpg",
+    "credit": "Andrewa at English Wikipedia",
+    "license": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Rjxx.jpg"
+  },
+  {
+    "id": "vacuum-tube",
+    "file": "File:IBMVacuumTubeModule.jpg",
+    "url": "vacuum-tube.jpg",
+    "credit": "Wikimedia Commons",
+    "license": "CC BY 2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:IBMVacuumTubeModule.jpg"
+  },
+  {
+    "id": "glassblowing",
+    "file": "File:Glass_bubble.jpg",
+    "url": "glassblowing.jpg",
+    "credit": "KamauxKamau",
+    "license": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Glass_bubble.jpg"
+  },
+  {
+    "id": "sulphuric-acid",
+    "file": "File:Sulphuric_acid_96_percent_extra_pure.jpg",
+    "url": "sulphuric-acid.jpg",
+    "credit": "W. Oelen",
+    "license": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Sulphuric_acid_96_percent_extra_pure.jpg"
+  },
+  {
+    "id": "oscillator",
+    "file": "File:Dynatron_signal_generator_1931.jpg",
+    "url": "oscillator.jpg",
+    "credit": "Unknown authorUnknown author",
+    "license": "Public domain",
+    "page": "https://commons.wikimedia.org/wiki/File:Dynatron_signal_generator_1931.jpg"
+  },
+  {
+    "id": "amplifier",
+    "file": "File:Vacuum_tube_HF300_shortwave_RF_power_amplifier_from_1938.jpg",
+    "url": "amplifier.jpg",
+    "credit": "W. W. Smith",
+    "license": "Public domain",
+    "page": "https://commons.wikimedia.org/wiki/File:Vacuum_tube_HF300_shortwave_RF_power_amplifier_from_1938.jpg"
+  },
+  {
+    "id": "core-memory",
+    "file": "File:KL_CoreMemory.jpg",
+    "url": "core-memory.jpg",
+    "credit": "Konstantin Lanzet",
+    "license": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:KL_CoreMemory.jpg"
+  },
+  {
+    "id": "punched-card",
+    "file": "File:2punchCards-square.jpg",
+    "url": "punched-card.jpg",
+    "credit": "José Antonio González Nieto - cropped by Eyesinthefire",
+    "license": "CC BY 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:2punchCards-square.jpg"
+  },
+  {
+    "id": "binary",
+    "file": "File:Binary_number_table.png",
+    "url": "binary.png",
+    "credit": "Elaz85",
+    "license": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Binary_number_table.png"
+  },
+  {
+    "id": "routing-table",
+    "file": "File:Bgp_rtable.png",
+    "url": "routing-table.png",
+    "credit": "User:NAME",
+    "license": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Bgp_rtable.png"
+  },
+  {
+    "id": "modem",
+    "file": "File:Analogue_modem_-_acoustic_coupler.jpg",
+    "url": "modem.jpg",
+    "credit": "secretlondon123",
+    "license": "CC BY-SA 2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Analogue_modem_-_acoustic_coupler.jpg"
+  },
+  {
+    "id": "packet-switching",
+    "file": "File:The_Steam_Packet_-_geograph.org.uk_-_1296000.jpg",
+    "url": "packet-switching.jpg",
+    "credit": "Chris Richardson",
+    "license": "CC BY-SA 2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:The_Steam_Packet_-_geograph.org.uk_-_1296000.jpg"
+  },
+  {
+    "id": "addressing",
+    "file": "File:IP_address_blocked.jpg",
+    "url": "addressing.jpg",
+    "credit": "Achiri Bitamsimli",
+    "license": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:IP_address_blocked.jpg"
+  },
+  {
+    "id": "error-correction",
+    "file": "File:Reed–Solomon_error_correction_Mona_Lisa_LroLrLasercomFig4.jpg",
+    "url": "error-correction.jpg",
+    "credit": "Image credit: Xiaoli Sun, NASA Goddard",
+    "license": "Public domain",
+    "page": "https://commons.wikimedia.org/wiki/File:Reed%E2%80%93Solomon_error_correction_Mona_Lisa_LroLrLasercomFig4.jpg"
+  },
+  {
+    "id": "integrated-circuit",
+    "file": "File:Extron_DMP_128_-_board_-_Microchip_24LC512-9701.jpg",
+    "url": "integrated-circuit.jpg",
+    "credit": "Raimond Spekking",
+    "license": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Extron_DMP_128_-_board_-_Microchip_24LC512-9701.jpg"
+  },
+  {
+    "id": "electrolytic-capacitor",
+    "file": "File:Electrolytic_capacitors-P1090328.JPG",
+    "url": "electrolytic-capacitor.jpg",
+    "credit": "Elcap",
+    "license": "CC0",
+    "page": "https://commons.wikimedia.org/wiki/File:Electrolytic_capacitors-P1090328.JPG"
+  },
+  {
+    "id": "protocol",
+    "file": "File:TCPIP_Model.jpg",
+    "url": "protocol.jpg",
+    "credit": "Ardika6879",
+    "license": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:TCPIP_Model.jpg"
+  },
+  {
+    "id": "internetworking",
+    "file": "File:Logo-internetvietnam.net.jpg",
+    "url": "internetworking.jpg",
+    "credit": "Internetviet",
+    "license": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Logo-internetvietnam.net.jpg"
+  },
+  {
+    "id": "photolithography",
+    "file": "File:Cleanroom_-_photolithography_lab_(9150555748).jpg",
+    "url": "photolithography.jpg",
+    "credit": "UCL Mathematical & Physical Sciences from London, UK",
+    "license": "CC BY 2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Cleanroom_-_photolithography_lab_(9150555748).jpg"
+  },
+  {
+    "id": "one-bit-machine",
+    "file": "File:KL_Intel_P8051.jpg",
+    "url": "one-bit-machine.jpg",
+    "credit": "Konstantin Lanzet (with permission)",
+    "license": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:KL_Intel_P8051.jpg"
+  },
+  {
+    "id": "open-standard",
+    "file": "File:IPv4_RFC_791_first_page.png",
+    "url": "open-standard.png",
+    "credit": "University of Southern California",
+    "license": "Public domain",
+    "page": "https://commons.wikimedia.org/wiki/File:IPv4_RFC_791_first_page.png"
+  }
+]

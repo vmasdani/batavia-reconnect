@@ -16,14 +16,23 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Dialogue } from './Dialogue'
+import { castById } from './cast'
+import { skitsFor, type Scene } from './skits'
 import { castOf, type Chapter } from './story'
 import { Backdrop } from './backdrops'
+import { EraRelay } from './EraRelay'
 import { TermText } from './Glossary'
 import { LangPicker } from './LangPicker'
 import { UI, chaptersIn, type Lang } from './lang'
 
-/** Where in a chapter the reader is. Halves are dialogue; the rest are cards. */
-type Beat = 'title' | 'opening' | 'work' | 'closing'
+/**
+ * Where in a chapter the reader is. Halves are dialogue; the rest are cards.
+ *
+ * `skits` hangs off the title card rather than sitting in the four-beat run,
+ * because a skit is beside the chapter and not a step through it — reading one
+ * puts you back where you were.
+ */
+type Beat = 'title' | 'errand' | 'opening' | 'work' | 'closing' | 'skits'
 
 /**
  * A full-bleed title card: era, year, name, and one line of premise.
@@ -39,6 +48,8 @@ export function Card({
   body,
   action,
   onAction,
+  alt,
+  onAlt,
 }: {
   era: number
   eyebrow: React.ReactNode
@@ -46,6 +57,9 @@ export function Card({
   body: string
   action: string
   onAction: () => void
+  /** A second way on, when the era has one. The card click still takes the first. */
+  alt?: string
+  onAlt?: () => void
 }) {
   return (
     <div className="story-card" onClick={onAction}>
@@ -55,9 +69,23 @@ export function Card({
       <p className="story-card__premise">
         <TermText text={body} />
       </p>
-      <button type="button" className="button button--primary story-card__begin" onClick={onAction}>
-        {action}
-      </button>
+      <div className="story-card__buttons">
+        <button type="button" className="button button--primary story-card__begin" onClick={onAction}>
+          {action}
+        </button>
+        {alt && onAlt && (
+          <button
+            type="button"
+            className="button"
+            onClick={(event) => {
+              event.stopPropagation()
+              onAlt()
+            }}
+          >
+            {alt}
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -99,11 +127,14 @@ export function Story({
   const [beat, setBeat] = useState<Beat>('title')
   const [line, setLine] = useState(0)
   const [ended, setEnded] = useState(false)
+  /** The skit being read, when one is. Null is the list. */
+  const [scene, setScene] = useState<Scene | null>(null)
 
   const t = UI[lang]
   const chapters = useMemo(() => chaptersIn(lang), [lang])
   const current: Chapter = chapters[chapter]
-  const speaking = beat === 'opening' || beat === 'closing'
+  const skits = useMemo(() => skitsFor(current.era, lang), [current.era, lang])
+  const speaking = beat === 'opening' || beat === 'closing' || (beat === 'skits' && scene !== null)
   const lines = beat === 'closing' ? current.closing : current.opening
 
   // Escape leaves the mode from a card; while dialogue is up, Dialogue's own
@@ -122,11 +153,13 @@ export function Story({
     setChapter(index)
     setBeat(at)
     setLine(0)
+    setScene(null)
   }
 
   const start = (at: Beat) => {
     setBeat(at)
     setLine(0)
+    setScene(null)
   }
 
   const advance = () => {
@@ -175,8 +208,67 @@ export function Story({
           title={current.title}
           body={current.premise}
           action={t.begin}
-          onAction={() => start('opening')}
+          onAction={() => start('errand')}
+          alt={skits.length ? `${t.skits} · ${skits.length}` : undefined}
+          onAlt={() => start('skits')}
         />
+      ) : beat === 'errand' ? (
+        /* The same message crossing the same nine places, once per chapter.
+           Read straight through, the eight numbers it ends on are the arc. */
+        <>
+          <Backdrop era={current.era} />
+          <EraRelay era={current.era} lang={lang} onDone={() => start('opening')} />
+        </>
+      ) : beat === 'skits' ? (
+        <>
+          <Backdrop era={current.era} />
+          {scene ? (
+            <Dialogue
+              cast={scene.cast}
+              lines={scene.lines}
+              index={line}
+              label={`${t.era} ${current.era} · ${scene.title}`}
+              onAdvance={() => (line + 1 < scene.lines.length ? setLine(line + 1) : setScene(null))}
+              onClose={() => setScene(null)}
+              endLabel={t.back}
+              closeLabel={t.back}
+              nextLabel={t.next}
+              showLabel={t.show}
+              variant="story"
+              era={current.era}
+            />
+          ) : (
+            <div className="story-skits">
+              <p className="story-skits__era">
+                {t.era} {current.era} <span>·</span> {t.skits}
+              </p>
+              <h1 className="story-skits__title">{current.title}</h1>
+              <p className="story-skits__note">{t.skitsNote}</p>
+              <ol className="story-skits__list">
+                {skits.map((one) => (
+                  <li key={one.id}>
+                    <button
+                      type="button"
+                      className="story-skits__item"
+                      onClick={() => {
+                        setScene(one)
+                        setLine(0)
+                      }}
+                    >
+                      <span className="story-skits__name">{one.title}</span>
+                      <span className="story-skits__cast">
+                        {one.cast.map((who) => castById(who)?.name ?? who).join(' · ')}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+              <button type="button" className="button" onClick={() => setBeat('title')}>
+                ← {t.back}
+              </button>
+            </div>
+          )}
+        </>
       ) : beat === 'work' ? (
         <Card
           era={current.era}
